@@ -60,7 +60,7 @@ int16_t accelGyro[6] = {0};
 /***************************************************************/
 
 /* 卡尔曼滤波函数 */
-void Kalman_Filter(float Accel, float Gyro)
+float Kalman_Filter(float Accel, float Gyro)
 {
   Angle += (Gyro - Q_bias) * dt;
 
@@ -98,12 +98,14 @@ void Kalman_Filter(float Accel, float Gyro)
 
   Angle += K_0 * Angle_err;
   Q_bias += K_1 * Angle_err;
+
+  return Angle;
 }
 
 void MPU6050Init()
 {
 #if serialbmi160_log
-  Serial.print("BMI160 reset");
+  Serial.println("\r\nBMI160 reset");
 #endif
   while (bmi160.softReset() != BMI160_OK)
   {
@@ -115,9 +117,20 @@ void MPU6050Init()
 
   // set and init the bmi160 i2c address
 #if serialbmi160_log
-  Serial.print("BMI160 init");
+  Serial.println("\r\nBMI160 init");
 #endif
   while (bmi160.I2cInit(i2c_addr) != BMI160_OK)
+  {
+#if serialbmi160_log
+    Serial.print(" .");
+#endif
+    delay(300);
+  }
+
+#if serialbmi160_log
+  Serial.println("\r\nBMI160 set setStepPowerMode");
+#endif
+  while (bmi160.setStepPowerMode(bmi160.stepLowPowerMode) != BMI160_OK)
   {
 #if serialbmi160_log
     Serial.print(" .");
@@ -215,7 +228,7 @@ void BMI160_math_display()
 
   //  获取运行时间必须放kalman最后
   dt = time / 1000.0;
-  Kalman_Filter(az_angle, gyro);
+  Angle = Kalman_Filter(az_angle, gyro);
 
 // Serial.print(az_angle);
 // Serial.print("   ,   ");
