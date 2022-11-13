@@ -300,7 +300,6 @@ void setup()
   delay(100);
 
   MPU6050Init();
-
   // UVInit();
 }
 
