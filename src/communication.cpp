@@ -1,10 +1,11 @@
 #include <communication.h>
 
-uint8_t HEX_Format_flag = 1;
-uint8_t BMI160_SCAN_flag = 0;
-uint8_t AS7341_SCAN_flag = 0;
-uint8_t UV_SCAN_flag = 0;
-uint8_t SINGLE_flag = 2;
+RTC_DATA_ATTR uint8_t HEX_Format_flag = 1;
+RTC_DATA_ATTR uint8_t LOW_POWER_flag = 0;
+RTC_DATA_ATTR uint8_t BMI160_SCAN_flag = 0;
+RTC_DATA_ATTR uint8_t AS7341_SCAN_flag = 0;
+RTC_DATA_ATTR uint8_t UV_SCAN_flag = 0;
+RTC_DATA_ATTR uint8_t SINGLE_flag = 2;
 
 uint8_t table_data[9]; // 这是提前定义一个数组存放接收到的数据
 uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据复制到这里面
@@ -124,6 +125,7 @@ void serialEvent() // 关键的来了。串口中断部分来了。多注意，�
 void getEventFlag()
 {
   HEX_Format_flag = table_cp[6];
+  TIME_TO_SLEEP = table_cp[7];
 
   if (table_cp[2] == 0x30)
   {
@@ -199,6 +201,7 @@ void getEventFlag()
   {
     _ALLCAN();
     SINGLE_flag = table_cp[3];
+    gainval = table_cp[4];
     // switch (table_cp[3])
     // {
     // case 0x00:

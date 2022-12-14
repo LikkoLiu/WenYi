@@ -2,7 +2,7 @@
 
 Adafruit_AS7341 as7341;
 uint16_t readings[12];
-uint8_t gainval;
+RTC_DATA_ATTR uint8_t gainval;
 
 void AS7341init()
 {

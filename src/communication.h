@@ -1,6 +1,7 @@
 #ifndef __COMMUNICATION_H_
 #define __COMMUNICATION_H_
 #include <Arduino.h>
+#include <lowpower.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -26,16 +27,17 @@
     AS7341_SCAN_flag = 1; \
     UV_SCAN_flag = 1;
 
-extern uint8_t HEX_Format_flag;
-extern uint8_t BMI160_SCAN_flag;
-extern uint8_t AS7341_SCAN_flag;
-extern uint8_t UV_SCAN_flag;
-extern uint8_t SINGLE_flag;
+RTC_DATA_ATTR extern uint8_t HEX_Format_flag;
+RTC_DATA_ATTR extern uint8_t LOW_POWER_flag;
+RTC_DATA_ATTR extern uint8_t BMI160_SCAN_flag;
+RTC_DATA_ATTR extern uint8_t AS7341_SCAN_flag;
+RTC_DATA_ATTR extern uint8_t UV_SCAN_flag;
+RTC_DATA_ATTR extern uint8_t SINGLE_flag;
 extern uint8_t table_data[9]; // 这是提前定义一个数组存放接收到的数据
 extern uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据复制到这里面
 extern uint16_t count;        // 接收数据计数
 extern uint8_t table_sum;
-extern uint8_t gainval;
+RTC_DATA_ATTR extern uint8_t gainval;
 
 void serialEvent();
 void getEventFlag();
