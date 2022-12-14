@@ -40,7 +40,7 @@ void UVDisplay()
     // Serial.print(" OutputVoltage: ");
     // Serial.print(outputVoltage);
 
-#if !AS7341ScanDebug
+#if serialAS7341S_log
     // Serial.print("UV Intensity: ");
     Serial.println(uvIntensity);
     // Serial.print(" mW/cm^2");

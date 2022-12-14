@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "cstring": "cpp",
+        "i2c_periph.h": "c",
+        "periph_defs.h": "c",
+        "i2c.h": "c"
     }
 }

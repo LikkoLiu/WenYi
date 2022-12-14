@@ -4,38 +4,57 @@
 #include <communication.h>
 #include <mybmi160.h>
 #include <myuv.h>
-#include "DFRobot_AS7341.h"
+#include <myas7341.h>
 
-#define BMI160_Flag 0
-#define UV_Flag 0
-#define AS7341_Flag 0
+uint8_t _I2C_BMI160INIT_Flag = 0;
+uint8_t _I2C_AS7341INIT_Flag = 0;
 
 void setup()
 {
   Serial.begin(115200);
   delay(100);
 
-#if BMI160_Flag
-  MPU6050Init();
-#endif
-
-#if UV_Flag
   UVInit();
-#endif
-
 }
 
 void loop()
 {
-#if BMI160_Flag
-  BMI160_math_display();
-#endif
+  if (SINGLE_flag == 0 || SINGLE_flag == 1)
+  {
+    if (AS7341_SCAN_flag)
+    {
+      if (!_I2C_AS7341INIT_Flag)
+      {
+        AS7341init();
+        _I2C_BMI160INIT_Flag = 0;
+        _I2C_AS7341INIT_Flag = 1;
+      }
+      AS7341Scan();
+    }
 
-#if UV_Flag
-  UVDisplay();
-#endif
+    if (BMI160_SCAN_flag)
+    {
+      if (!_I2C_BMI160INIT_Flag)
+      {
+        MPU6050Init();
+        _I2C_BMI160INIT_Flag = 1;
+        _I2C_AS7341INIT_Flag = 0;
+        delay(50);
+      }
+      for (int j = 0; j < 10; j++)
+      {
+        BMI160_math_display();
+        // delay(50); //must timeout --> mybmi.cpp|BMI160_math_display()
+      }
+    }
 
+    if (UV_SCAN_flag)
+    {
+      UVDisplay();
+    }
+
+    if (SINGLE_flag == 1)
+      SINGLE_flag = 2;
+  }
   serialEvent();
-
-  delay(50);
 }

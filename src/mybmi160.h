@@ -2,7 +2,8 @@
 #define	__MYBMI160_H_
 #include <Arduino.h>
 #include <DFRobot_BMI160.h>
-#define serialbmi160_log 1
+#include <communication.h>
+#define serialbmi160_log 0
 
 /* 把mpu6050放在水平桌面上，分别读取读取2000次，然后求平均值 */
 #define AZ_ZERO (747.25) /* 加速度计的0偏修正值 */

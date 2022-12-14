@@ -1,5 +1,10 @@
 #include <mybmi160.h>
 
+union float_int
+{
+    float x;
+    uint8_t s[4];
+} floattoint;
 /*************************** BMI160 ******************************/
 DFRobot_BMI160 bmi160;
 const int8_t i2c_addr = 0x69;
@@ -111,16 +116,16 @@ void MPU6050Init()
         delay(300);
     }
 
-#if serialbmi160_log
-    Serial.println("\r\nBMI160 set setStepPowerMode");
-#endif
-    while (bmi160.setStepPowerMode(bmi160.stepLowPowerMode) != BMI160_OK)
-    {
-#if serialbmi160_log
-        Serial.print(" .");
-#endif
-        delay(300);
-    }
+    // #if serialbmi160_log
+    //     Serial.println("\r\nBMI160 set setStepPowerMode");
+    // #endif
+    //     while (bmi160.setStepPowerMode(bmi160.stepLowPowerMode) != BMI160_OK)
+    //     {
+    // #if serialbmi160_log
+    //         Serial.print(" .");
+    // #endif
+    //         delay(300);
+    // }
 }
 
 void BMI160_math_display()
@@ -222,6 +227,9 @@ void BMI160_math_display()
     Serial.print("Angle:");
     Serial.println(Angle);
 #endif
+    float_to_hex_printf(Angle);
+
+    delay(50);
     /***************************************************************/
     //   Kalman_Filter(ay_angle, gxro);
 

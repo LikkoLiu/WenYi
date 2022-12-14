@@ -1,9 +1,47 @@
 #include <communication.h>
 
+uint8_t BMI160_SCAN_flag = 0;
+uint8_t AS7341_SCAN_flag = 0;
+uint8_t UV_SCAN_flag = 0;
+uint8_t SINGLE_flag = 2;
 
 uint8_t table_data[9]; // 这是提前定义一个数组存放接收到的数据
 uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据复制到这里面
 uint16_t count = 0;    // 接收数据计数
+uint8_t table_sum = 0;
+
+void float_to_hex_printf(float num)
+{
+  union float_int
+  {
+    float x;
+    uint8_t s[4];
+  } floattoint;
+
+  floattoint.x = num;
+  Serial.printf("%c", 0xaa);
+  Serial.printf("%c%c%c%c", floattoint.s[0], floattoint.s[1], floattoint.s[2], floattoint.s[3]);
+}
+
+void uint16_to_hex_printf(uint16_t val/*, u8 chval, u8 gainval*/)
+{
+	uint8_t hexSendBuff[4];
+	uint8_t i;
+	hexSendBuff[0] = (0xff00 & val) >> 8;
+	hexSendBuff[1] = (0xff & val);
+	// hexSendBuff[3] = chval << 4;
+	// hexSendBuff[3] += gainval;
+	for (i = 0; i < 3; i++)
+	{
+		hexSendBuff[3] += hexSendBuff[i];
+	}
+	Serial.printf("%c", 0xaa);
+	for (i = 0; i < 2; i++)
+	{
+		// USART_SendData(USART1, table_cp[i]);
+		Serial.printf("%c", hexSendBuff[i]);
+	}
+}
 
 void serialEvent() // 关键的来了。串口中断部分来了。多注意，多百度。
 {
@@ -55,12 +93,120 @@ void serialEvent() // 关键的来了。串口中断部分来了。多注意，�
       table_cp[i] = table_data[i];
     }
 
-    for (i = 0; i < 9; i++)
+    if (table_cp[0] == 0x2c) // 如果数组第一个十六进制数据是0X2C则进行
     {
-      // USART_SendData(USART1, table_cp[i]);
-      Serial.printf("%c", table_cp[i]);
-    }
+      // 原始数据（十六进制数据）是2C E4 04 00 00 AD 01 23 FC
+      table_sum = 0;
+      for (i = 0; i < 8; i++)
+      {
+        // USART_SendData(USART1, table_cp[i]);
+        table_sum += table_cp[i];
+      }
+      if (table_sum == table_cp[8])
+      {
+        for (i = 0; i < 9; i++)
+        {
+          // USART_SendData(USART1, table_cp[i]);
+          Serial.printf("%c", table_cp[i]);
+        }
+        getEventFlag();
+        memset(table_cp, 0, 9); // 在使用数组table_cp时清空
+        memset(table_data, 0, 9);
+      }
 
-    count = 0;
+      count = 0;
+    }
+  }
+}
+
+void getEventFlag()
+{
+  if (table_cp[2] == 0x30)
+  {
+    _STOPACAN();
+  }
+
+  else if (table_cp[2] == 0x31)
+  {
+    _BMI160();
+    SINGLE_flag = table_cp[3];
+    switch (table_cp[3])
+    {
+    case 0x31:
+
+      break;
+    case 0x32:
+
+      break;
+    case 0x33:
+
+      break;
+    case 0x34:
+
+      break;
+    default:
+      break;
+    }
+  }
+
+  else if (table_cp[2] == 0x32)
+  {
+    _AS7341();
+    SINGLE_flag = table_cp[3];
+    switch (table_cp[3])
+    {
+    case 0x31:
+
+      break;
+    case 0x32:
+
+      break;
+    case 0x33:
+
+      break;
+    case 0x34:
+
+      break;
+    default:
+      break;
+    }
+  }
+  else if (table_cp[2] == 0x33)
+  {
+    _UV();
+    SINGLE_flag = table_cp[3];
+    switch (table_cp[3])
+    {
+    case 0x00:
+
+      break;
+    case 0x01:
+
+      break;
+    case 0x03:
+
+      break;
+    default:
+      break;
+    }
+  }
+  else if (table_cp[2] == 0x34)
+  {
+    _ALLCAN();
+    SINGLE_flag = table_cp[3];
+    switch (table_cp[3])
+    {
+    case 0x00:
+
+      break;
+    case 0x01:
+
+      break;
+    case 0x03:
+
+      break;
+    default:
+      break;
+    }
   }
 }
