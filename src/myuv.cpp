@@ -40,12 +40,20 @@ void UVDisplay()
     // Serial.print(" OutputVoltage: ");
     // Serial.print(outputVoltage);
 
-#if serialAS7341S_log
-    // Serial.print("UV Intensity: ");
+#if 0
+    Serial.print("UV Intensity: ");
     Serial.println(uvIntensity);
     // Serial.print(" mW/cm^2");
     // Serial.print(",");
 #endif
+
+    if (HEX_Format_flag)
+        float_to_hex_printf(0xcc, uvIntensity);
+    else
+    {
+        Serial.print("UV Intensity: ");
+        Serial.println(uvIntensity);
+    }
 
     // if (cyclesCount == 10)
     //   UV[bootCount - 1] = uvIntensity;

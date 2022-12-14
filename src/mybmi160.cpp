@@ -223,11 +223,17 @@ void BMI160_math_display()
 // Serial.print("   ,   ");
 // Serial.print(total_angle);
 // Serial.print("   ,   ");
-#if serialbmi160_log
+#if 0
     Serial.print("Angle:");
     Serial.println(Angle);
 #endif
-    float_to_hex_printf(Angle);
+    if (HEX_Format_flag)
+        float_to_hex_printf(0xaa, Angle);
+    else
+    {
+        Serial.print("Angle:");
+        Serial.println(Angle);
+    }
 
     delay(50);
     /***************************************************************/

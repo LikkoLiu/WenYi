@@ -1,5 +1,6 @@
 #include <communication.h>
 
+uint8_t HEX_Format_flag = 1;
 uint8_t BMI160_SCAN_flag = 0;
 uint8_t AS7341_SCAN_flag = 0;
 uint8_t UV_SCAN_flag = 0;
@@ -10,7 +11,7 @@ uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据
 uint16_t count = 0;    // 接收数据计数
 uint8_t table_sum = 0;
 
-void float_to_hex_printf(float num)
+void float_to_hex_printf(uint8_t signnum, float num)
 {
   union float_int
   {
@@ -19,28 +20,29 @@ void float_to_hex_printf(float num)
   } floattoint;
 
   floattoint.x = num;
-  Serial.printf("%c", 0xaa);
+  Serial.printf("%c", signnum);
   Serial.printf("%c%c%c%c", floattoint.s[0], floattoint.s[1], floattoint.s[2], floattoint.s[3]);
 }
 
-void uint16_to_hex_printf(uint16_t val/*, u8 chval, u8 gainval*/)
+void uint16_to_hex_printf(uint16_t val, uint8_t chval, uint8_t gainval)
 {
-	uint8_t hexSendBuff[4];
-	uint8_t i;
-	hexSendBuff[0] = (0xff00 & val) >> 8;
-	hexSendBuff[1] = (0xff & val);
-	// hexSendBuff[3] = chval << 4;
-	// hexSendBuff[3] += gainval;
-	for (i = 0; i < 3; i++)
-	{
-		hexSendBuff[3] += hexSendBuff[i];
-	}
-	Serial.printf("%c", 0xaa);
-	for (i = 0; i < 2; i++)
-	{
-		// USART_SendData(USART1, table_cp[i]);
-		Serial.printf("%c", hexSendBuff[i]);
-	}
+  uint8_t hexSendBuff[4];
+  uint8_t i;
+  hexSendBuff[0] = (0xff00 & val) >> 8;
+  hexSendBuff[1] = (0xff & val);
+  // hexSendBuff[2] = (0xff & chval);
+  hexSendBuff[2] = chval << 4;
+  hexSendBuff[2] += gainval;
+  for (i = 0; i < 3; i++)
+  {
+    hexSendBuff[3] += hexSendBuff[i];
+  }
+  Serial.printf("%c", 0xbb);
+  for (i = 0; i < 3; i++)
+  {
+    // USART_SendData(USART1, table_cp[i]);
+    Serial.printf("%c", hexSendBuff[i]);
+  }
 }
 
 void serialEvent() // 关键的来了。串口中断部分来了。多注意，多百度。
@@ -121,6 +123,8 @@ void serialEvent() // 关键的来了。串口中断部分来了。多注意，�
 
 void getEventFlag()
 {
+  HEX_Format_flag = table_cp[6];
+
   if (table_cp[2] == 0x30)
   {
     _STOPACAN();
@@ -130,83 +134,84 @@ void getEventFlag()
   {
     _BMI160();
     SINGLE_flag = table_cp[3];
-    switch (table_cp[3])
-    {
-    case 0x31:
+    // switch (table_cp[3])
+    // {
+    // case 0x31:
 
-      break;
-    case 0x32:
+    //   break;
+    // case 0x32:
 
-      break;
-    case 0x33:
+    //   break;
+    // case 0x33:
 
-      break;
-    case 0x34:
+    //   break;
+    // case 0x34:
 
-      break;
-    default:
-      break;
-    }
+    //   break;
+    // default:
+    //   break;
+    // }
   }
 
   else if (table_cp[2] == 0x32)
   {
     _AS7341();
     SINGLE_flag = table_cp[3];
-    switch (table_cp[3])
-    {
-    case 0x31:
+    gainval = table_cp[4];
+    // switch (table_cp[5])
+    // {
+    // case 0x31:
 
-      break;
-    case 0x32:
+    //   break;
+    // case 0x32:
 
-      break;
-    case 0x33:
+    //   break;
+    // case 0x33:
 
-      break;
-    case 0x34:
+    //   break;
+    // case 0x34:
 
-      break;
-    default:
-      break;
-    }
+    //   break;
+    // default:
+    //   break;
+    // }
   }
   else if (table_cp[2] == 0x33)
   {
     _UV();
     SINGLE_flag = table_cp[3];
-    switch (table_cp[3])
-    {
-    case 0x00:
+    // switch (table_cp[3])
+    // {
+    // case 0x00:
 
-      break;
-    case 0x01:
+    //   break;
+    // case 0x01:
 
-      break;
-    case 0x03:
+    //   break;
+    // case 0x03:
 
-      break;
-    default:
-      break;
-    }
+    //   break;
+    // default:
+    //   break;
+    // }
   }
   else if (table_cp[2] == 0x34)
   {
     _ALLCAN();
     SINGLE_flag = table_cp[3];
-    switch (table_cp[3])
-    {
-    case 0x00:
+    // switch (table_cp[3])
+    // {
+    // case 0x00:
 
-      break;
-    case 0x01:
+    //   break;
+    // case 0x01:
 
-      break;
-    case 0x03:
+    //   break;
+    // case 0x03:
 
-      break;
-    default:
-      break;
-    }
+    //   break;
+    // default:
+    //   break;
+    // }
   }
 }
