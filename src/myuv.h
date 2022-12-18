@@ -2,6 +2,7 @@
 #define __MYUV_H_
 #include <Arduino.h>
 #include <communication.h>
+#include <mywifi.h>
 #define serialAS7341S_log 0
 
 extern int ReadUVintensityPin; // Output from the sensor

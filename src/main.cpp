@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include "WiFiUdp.h"
+#include <mywifi.h>
 #include <communication.h>
 #include <mybmi160.h>
 #include <myuv.h>
@@ -38,6 +37,22 @@ void setup()
 void loop()
 {
   serialEvent();
+  if (Wifi_init_succ == 1)
+    wifiEvent();
+
+  
+
+  if (((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2)) && Wifi_init_succ == 0)
+    wifi_ap_init();
+  if ((COMMNUI_CH_flag == 0) && Wifi_init_succ == 1)
+  {
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
+    Serial.printf("%c", 0xFF);
+    Serial.printf("%c", Succ_disconnect);
+    Wifi_init_succ = 0;
+  }
+
   if (SINGLE_flag == 0 || SINGLE_flag == 1)
   {
     if (AS7341_SCAN_flag)
@@ -77,7 +92,7 @@ void loop()
   }
 
   // Serial.printf("TIME_TO_SLEEP is : %d\r\n",TIME_TO_SLEEP);
-  if ((TIME_TO_SLEEP > 0)&&(SINGLE_flag == 0))
+  if ((TIME_TO_SLEEP > 0) && (SINGLE_flag == 0))
   {
     serialEvent();
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);

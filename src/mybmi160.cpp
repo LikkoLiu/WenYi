@@ -102,6 +102,8 @@ void MPU6050Init()
         Serial.print(" .");
 #endif
         delay(300);
+        Serial.printf("%c", 0xEE);
+        Serial.printf("%c", ERR_BMI160_Init);
     }
 
     // set and init the bmi160 i2c address
@@ -114,6 +116,8 @@ void MPU6050Init()
         Serial.print(" .");
 #endif
         delay(300);
+        Serial.printf("%c", 0xEE);
+        Serial.printf("%c", ERR_BMI160_I2cInit);
     }
 
     // #if serialbmi160_log
@@ -169,6 +173,8 @@ void BMI160_math_display()
 #if serialbmi160_log
         Serial.print("get BIM160_data Error");
 #endif
+        Serial.printf("%c", 0xEE);
+        Serial.printf("%c", ERR_BMI160_read);
     }
 
     if (pretime == 0)
@@ -223,16 +229,26 @@ void BMI160_math_display()
 // Serial.print("   ,   ");
 // Serial.print(total_angle);
 // Serial.print("   ,   ");
-#if 0
-    Serial.print("Angle:");
-    Serial.println(Angle);
-#endif
+
     if (HEX_Format_flag)
-        float_to_hex_printf(0xaa, Angle);
+    {
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+            float_to_hex_printf(0xaa, Angle);
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+            Wifi_float_to_hex_printf(0xaa, Angle);
+    }
     else
     {
-        Serial.print("Angle:");
-        Serial.println(Angle);
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+        {
+            Serial.print("Angle:");
+            Serial.println(Angle);
+        }
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+        {
+            wifi_printf(0xEE);
+            wifi_printf(ERR_Format); // 打印信息
+        }
     }
 
     delay(50);

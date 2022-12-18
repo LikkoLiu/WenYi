@@ -48,15 +48,28 @@ void UVDisplay()
 #endif
 
     if (HEX_Format_flag)
-        float_to_hex_printf(0xcc, uvIntensity);
+    {
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+            float_to_hex_printf(0xcc, uvIntensity);
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+            Wifi_float_to_hex_printf(0xcc, uvIntensity);
+    }
     else
     {
-        Serial.print("UV Intensity: ");
-        Serial.println(uvIntensity);
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+        {
+            Serial.print("UV Intensity: ");
+            Serial.println(uvIntensity);
+        }
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+        {
+            wifi_printf(0xEE);
+            wifi_printf(ERR_Format); // 打印信息
+        }
     }
 
     // if (cyclesCount == 10)
     //   UV[bootCount - 1] = uvIntensity;
-    // sendCallBack(" UV Intensity: ", uvIntensity);
+    // wifi_printf(" UV Intensity: ", uvIntensity);
 }
 /*********************************************************/
