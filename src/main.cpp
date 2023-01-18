@@ -13,9 +13,11 @@ void setup()
 {
   Serial.begin(115200);
   delay(100);
-
+  // Serial.print("hello\n");
+  pinMode(15, OUTPUT);
+  digitalWrite(15, LOW);
   UVInit();
-
+  // Serial.print("ok\n");
   /*************************** POWER ******************************/
   // Print the wakeup reason for ESP32
   print_wakeup_reason();
@@ -40,7 +42,7 @@ void loop()
   if (Wifi_init_succ == 1)
     wifiEvent();
 
-  
+
 
   if (((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2)) && Wifi_init_succ == 0)
     wifi_ap_init();

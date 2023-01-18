@@ -1,7 +1,7 @@
 #include <myuv.h>
 
 /*************************** UV ******************************/
-int ReadUVintensityPin = 1; // Output from the sensor
+int ReadUVintensityPin = 34; // Output from the sensor
 
 float mapfloat(float x, float in_min /*噪声*/, float in_max, float out_min /*偏移*/, float out_max)
 {
@@ -10,7 +10,7 @@ float mapfloat(float x, float in_min /*噪声*/, float in_max, float out_min /*�
 
 // Takes an average of readings on a given pin
 // Returns the average
-int averageAnalogRead(int pinToRead)
+unsigned int averageAnalogRead(int pinToRead)
 {
     byte numberOfReadings = 8; // Averg_times
     unsigned int runningValue = 0;
@@ -29,10 +29,10 @@ void UVInit()
 
 void UVDisplay()
 {
-    int uvLevel = averageAnalogRead(ReadUVintensityPin);
+    unsigned int uvLevel = averageAnalogRead(ReadUVintensityPin);
 
     float outputVoltage = 5.0 * uvLevel / 1024;
-    float uvIntensity = mapfloat(outputVoltage, 0.99, 2.9, 0.0, 15.0);
+    float uvIntensity = mapfloat(outputVoltage, 0.09, 2.9, 0.0, 15.0);
 
     // Serial.print("UVAnalogOutput: ");
     // Serial.println(uvLevel);
