@@ -14,10 +14,13 @@ void setup()
   Serial.begin(115200);
   delay(100);
   // Serial.print("hello\n");
-  pinMode(15, OUTPUT);
-  digitalWrite(15, LOW);
+
+  pinMode(15, OUTPUT);//
+  digitalWrite(15, HIGH);
+
   UVInit();
   // Serial.print("ok\n");
+
   /*************************** POWER ******************************/
   // Print the wakeup reason for ESP32
   print_wakeup_reason();
@@ -59,6 +62,8 @@ void loop()
   {
     if (AS7341_SCAN_flag)
     {
+      digitalWrite(15, LOW);
+
       if (!_I2C_AS7341INIT_Flag)
       {
         AS7341init();
@@ -66,10 +71,12 @@ void loop()
         _I2C_AS7341INIT_Flag = 1;
       }
       AS7341Scan();
+      digitalWrite(15, HIGH);
     }
 
     if (BMI160_SCAN_flag)
     {
+      digitalWrite(15, LOW);
       if (!_I2C_BMI160INIT_Flag)
       {
         MPU6050Init();
@@ -82,11 +89,14 @@ void loop()
         BMI160_math_display();
         // delay(50); //must timeout --> mybmi.cpp|BMI160_math_display()
       }
+      digitalWrite(15, HIGH);
     }
 
     if (UV_SCAN_flag)
     {
+      digitalWrite(15, LOW);
       UVDisplay();
+      digitalWrite(15, HIGH);
     }
 
     if (SINGLE_flag == 1)
