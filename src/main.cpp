@@ -5,6 +5,7 @@
 #include <myuv.h>
 #include <myas7341.h>
 #include <lowpower.h>
+#include <myflash.h>
 
 uint8_t _I2C_BMI160INIT_Flag = 0;
 uint8_t _I2C_AS7341INIT_Flag = 0;
@@ -15,7 +16,7 @@ void setup()
   delay(100);
   // Serial.print("hello\n");
 
-  pinMode(15, OUTPUT);//
+  pinMode(15, OUTPUT); //
   digitalWrite(15, HIGH);
 
   UVInit();
@@ -37,6 +38,48 @@ void setup()
   Serial.println();
 #endif
   /****************************************************************/
+
+  norflash_spi_init();
+
+#ifdef FLASH_TEST_ENABLE
+  /* readwrite test */
+  int g = 0;
+  uint8_t str[1280];
+  memset(str, 0, sizeof(str));
+  unsigned int j = 0;
+  for (int k = 0; k < 5; k++)
+  {
+    for (int i = 0; i < 256; i++)
+    {
+      str[j] = i;
+      j++;
+    }
+  }
+  Serial.println("");
+  Serial.println("-----write data-------");
+  sector_erase(0x00);
+  write_one_sector_data(0x10, str, 256);
+  memset(str, 0, sizeof(str));
+  read_data(0x00, str, 512);
+  Serial.println("str:");
+  for (int k = 0; k < 512; k++)
+  {
+    if (g == 16)
+    {
+      Serial.println("|");
+      if (k % 256 == 0)
+        Serial.println("---------------");
+      {
+        g = 1;
+      }
+    }
+    else
+    {
+      g++;
+    }
+    Serial.printf("%02X ", str[k]);
+  }
+#endif
 }
 
 void loop()
@@ -44,8 +87,6 @@ void loop()
   serialEvent();
   if (Wifi_init_succ == 1)
     wifiEvent();
-
-
 
   if (((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2)) && Wifi_init_succ == 0)
     wifi_ap_init();
