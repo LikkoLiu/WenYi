@@ -31,7 +31,7 @@
 #define ONE_PAGE_SIZE 256
 #define SPI_FREQUENCY 100000 // 时钟频率太大则无时钟输出
 
-#define FLASH_TEST_ENABLE
+// #define FLASH_TEST_ENABLE
 
 uint16_t read_norflash_id();
 void sector_erase(uint32_t addr24);

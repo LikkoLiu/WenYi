@@ -6,25 +6,28 @@
 #include <myas7341.h>
 #include <lowpower.h>
 #include <myflash.h>
+#include "esp32-hal-cpu.h"
 
 uint8_t _I2C_BMI160INIT_Flag = 0;
 uint8_t _I2C_AS7341INIT_Flag = 0;
 
 void setup()
 {
+  pinMode(15, OUTPUT);		//外围传感器通电控制 
+  digitalWrite(15, LOW);
   Serial.begin(115200);
-  delay(100);
-  // Serial.print("hello\n");
 
-  pinMode(15, OUTPUT); //
-  digitalWrite(15, HIGH);
+  setCpuFrequencyMhz(80);	//设置CPU主频为80MHz
+  // Serial.println(getCpuFrequencyMhz());
+
+  delay(200);
+  digitalWrite(15, HIGH);	//CPU正常启动后亮灯 
 
   UVInit();
-  // Serial.print("ok\n");
 
   /*************************** POWER ******************************/
   // Print the wakeup reason for ESP32
-  print_wakeup_reason();
+  // print_wakeup_reason();
   /*
   First we configure the wake up source
   We set our ESP32 to wake up every 5 seconds
@@ -80,6 +83,10 @@ void setup()
     Serial.printf("%02X ", str[k]);
   }
 #endif
+
+  Wifi_init_succ = 0;
+
+  // vTaskDelay(5000 / portTICK_PERIOD_MS);();/
 }
 
 void loop()

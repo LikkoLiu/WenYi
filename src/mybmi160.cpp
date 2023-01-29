@@ -241,7 +241,13 @@ void BMI160_math_display()
     {
         if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
         {
-            Serial.print("Angle:");
+            // Serial.print(",");
+            // Serial.print(az_angle);
+            // Serial.print(",");
+            // Serial.print(gyro);
+            // Serial.print(",");
+            // Serial.println(Angle);
+            Serial.print("Angle: ");
             Serial.println(Angle);
         }
         if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
@@ -251,7 +257,7 @@ void BMI160_math_display()
         }
     }
 
-    delay(50);
+    delay(60);
     /***************************************************************/
     //   Kalman_Filter(ay_angle, gxro);
 
