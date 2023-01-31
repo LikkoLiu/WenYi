@@ -1,312 +1,162 @@
-#include <myflash.h>
+#include "myflash.h"
 
-/* Norflash spi init */
-void norflash_spi_init()
+
+wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
+
+void myflash_init(void)
 {
-    // gpio init
-    // pinMode(NORFLASH_HOLD_PIN, OUTPUT);
-    // pinMode(NORFLASH_WP_PIN, OUTPUT);
-    // digitalWrite(NORFLASH_HOLD_PIN, HIGH);
-    // digitalWrite(NORFLASH_WP_PIN, HIGH);
-
-    pinMode(NORFLASH_CS_PIN, OUTPUT);
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-
-#ifdef HARDWARE_SPI
-    SPI.begin();
-    SPI.setDataMode(SPI_MODE0);
-    SPI.setBitOrder(MSBFIRST);
-    SPI.setFrequency(SPI_FREQUENCY);
-#else
-    pinMode(NORFLASH_CLK_PIN, OUTPUT);
-    pinMode(NORFLASH_MOSI_PIN, OUTPUT);
-    pinMode(NORFLASH_MISO_PIN, INPUT);
-    digitalWrite(NORFLASH_CLK_PIN, LOW);
-    delay(1);
-#endif
-
-    // check write enable status
-    uint8_t data = 0;
-    write_enable();
-    data = read_status();
-#ifdef NORFLASH_DEBUG_ENABLE
-    Serial.printf("norflash write enable status:");
-    Serial.println(data, BIN);
-#endif
-
-    // read device id
-    uint16_t device_id = 0;
-    device_id = read_norflash_id();
-#ifdef NORFLASH_DEBUG_ENABLE
-    Serial.printf("norflash device id: 0x%04X", device_id);
-#endif
-}
-
-/* Norflash write one byte */
-void write_byte(uint8_t data)
-{
-#if HARDWARE_SPI
-    // SPI.transfer(data);
-    SPI.write(data);
-#endif
-#if 0
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        uint8_t status;
-        status = data & (0x80 >> i);
-        digitalWrite(NORFLASH_MOSI_PIN, status);
-        digitalWrite(NORFLASH_CLK_PIN, LOW);
-        digitalWrite(NORFLASH_CLK_PIN, HIGH);
-    }
-#endif
-}
-
-/* Norflash read one byte */
-uint8_t read_byte(uint8_t tx_data)
-{
-#if HARDWARE_SPI
-    uint8_t data = 0;
-    data = SPI.transfer(tx_data);
-    return data;
-#endif
-#if 0
-    uint8_t i = 0, data = 0;
-    for (i = 0; i < 8; i++)
-    {
-        digitalWrite(NORFLASH_CLK_PIN, HIGH);
-        digitalWrite(NORFLASH_CLK_PIN, LOW);
-        if (digitalRead(NORFLASH_MISO_PIN))
-        {
-            data |= 0x80 >> i;
-        }
-    }
-    return data;
-#endif
-}
-
-/* Norflash write enable */
-void write_enable()
-{
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(WRITE_ENABLE_CMD);
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-}
-
-/* Norflash write disable */
-void write_disable()
-{
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(WRITE_DISABLE_CMD);
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-}
-
-/* Read norflash status */
-uint8_t read_status()
-{
-    uint8_t status = 0;
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(READ_STATU_REGISTER_1);
-    delay(5);
-    status = read_byte(0x00);
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-    return status;
-}
-
-/* check norflash busy status */
-void check_busy(char *str)
-{
-    while (read_status() & 0x01)
-    {
-#ifdef NORFLASH_DEBUG_ENABLE
-        Serial.printf("status = 0, flash is busy of %s\n", str);
-#endif
-    }
-}
-
-/* Write less than oneblock(256 byte) data */
-void write_one_block_data(uint32_t addr, uint8_t *pbuf, uint16_t len)
-{
-    uint16_t i;
-    check_busy("write_one_block_data");
-    write_enable();
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(PAGE_PROGRAM_CMD);
-    write_byte((uint8_t)(addr >> 16));
-    write_byte((uint8_t)(addr >> 8));
-    write_byte((uint8_t)addr);
-    for (i = 0; i < len; i++)
-    {
-        write_byte(*pbuf++);
-    }
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-    check_busy("write_one_block_data");
-}
-
-/* Write less than one sector(4096 byte) length data  */
-void write_one_sector_data(uint32_t addr, uint8_t *pbuf, uint16_t len)
-{
-    uint16_t free_space, head, page, remain;
-    free_space = ONE_PAGE_SIZE - addr % ONE_PAGE_SIZE;
-    if (len <= free_space)
-    {
-        head = len;
-        page = 0;
-        remain = 0;
-    }
-    if (len > free_space)
-    {
-        head = free_space;
-        page = (len - free_space) / ONE_PAGE_SIZE;
-        remain = (len - free_space) % ONE_PAGE_SIZE;
+    // Set up SPI bus and initialize the external SPI Flash chip
+    esp_flash_t* flash = example_init_ext_flash();
+    if (flash == NULL) {
+        return;
     }
 
-    if (head != 0)
-    {
-#ifdef NORFLASH_DEBUG_ENABLE
-        Serial.print("head:");
-        Serial.println(head);
-#endif
-        write_one_block_data(addr, pbuf, head);
-        pbuf = pbuf + head;
-        addr = addr + head;
+    // Add the entire external flash chip as a partition
+    const char *partition_label = "storage";
+    example_add_partition(flash, partition_label);
+
+    // List the available partitions
+    example_list_data_partitions();
+
+    // Initialize FAT FS in the partition
+    if (!example_mount_fatfs(partition_label)) {
+        return;
     }
-    if (page != 0)
-    {
-#ifdef NORFLASH_DEBUG_ENABLE
-        Serial.print("page:");
-        Serial.println(page);
-#endif
-        for (uint16_t i = 0; i < page; i++)
-        {
-            write_one_block_data(addr, pbuf, ONE_PAGE_SIZE);
-            pbuf = pbuf + ONE_PAGE_SIZE;
-            addr = addr + ONE_PAGE_SIZE;
-        }
+
+    // Print FAT FS size information
+    size_t bytes_total, bytes_free;
+    example_get_fatfs_usage(&bytes_total, &bytes_free);
+    ESP_LOGI(TAG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
+
+    // Create a file in FAT FS
+    ESP_LOGI(TAG, "Opening file");
+    FILE *f = fopen("/extflash/hello.txt", "wb");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return;
     }
-    if (remain != 0)
-    {
-#ifdef NORFLASH_DEBUG_ENABLE
-        Serial.print("remain:");
-        Serial.println(remain);
-#endif
-        write_one_block_data(addr, pbuf, remain);
+    fprintf(f, "Written using ESP-IDF %s\n", esp_get_idf_version());
+    fclose(f);
+    ESP_LOGI(TAG, "File written");
+
+    // Open file for reading
+    ESP_LOGI(TAG, "Reading file");
+    f = fopen("/extflash/hello.txt", "rb");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        return;
+    }
+    char line[128];
+    fgets(line, sizeof(line), f);
+    fclose(f);
+    // strip newline
+    char *pos = strchr(line, '\n');
+    if (pos) {
+        *pos = '\0';
+    }
+    ESP_LOGI(TAG, "Read from file: '%s'", line);
+}
+
+esp_flash_t* example_init_ext_flash(void)
+{
+    const spi_bus_config_t bus_config = {
+        .mosi_io_num = VSPI_IOMUX_PIN_NUM_MOSI,
+        .miso_io_num = VSPI_IOMUX_PIN_NUM_MISO,
+        .sclk_io_num = VSPI_IOMUX_PIN_NUM_CLK,
+        .quadwp_io_num = VSPI_IOMUX_PIN_NUM_WP,
+        .quadhd_io_num = VSPI_IOMUX_PIN_NUM_HD,
+    };
+
+    const esp_flash_spi_device_config_t device_config = {
+        .host_id = VSPI_HOST,
+        .cs_io_num = VSPI_IOMUX_PIN_NUM_CS,
+        .io_mode = SPI_FLASH_DIO,
+        .speed = ESP_FLASH_40MHZ,
+        .cs_id = 0,
+    };
+
+    ESP_LOGI(TAG, "Initializing external SPI Flash");
+    ESP_LOGI(TAG, "Pin assignments:");
+    ESP_LOGI(TAG, "MOSI: %2d   MISO: %2d   SCLK: %2d   CS: %2d",
+        bus_config.mosi_io_num, bus_config.miso_io_num,
+        bus_config.sclk_io_num, device_config.cs_io_num
+    );
+
+    // Initialize the SPI bus
+    ESP_ERROR_CHECK(spi_bus_initialize(VSPI_HOST, &bus_config, 1));
+
+    // Add device to the SPI bus
+    esp_flash_t* ext_flash;
+    ESP_ERROR_CHECK(spi_bus_add_flash_device(&ext_flash, &device_config));
+
+    // Probe the Flash chip and initialize it
+    esp_err_t err = esp_flash_init(ext_flash);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize external Flash: %s (0x%x)", esp_err_to_name(err), err);
+        return NULL;
+    }
+
+    // Print out the ID and size
+    uint32_t id;
+    ESP_ERROR_CHECK(esp_flash_read_id(ext_flash, &id));
+    ESP_LOGI(TAG, "Initialized external Flash, size=%d KB, ID=0x%x", ext_flash->size / 1024, id);
+
+    return ext_flash;
+}
+
+const esp_partition_t* example_add_partition(esp_flash_t* ext_flash, const char* partition_label)
+{
+    ESP_LOGI(TAG, "Adding external Flash as a partition, label=\"%s\", size=%d KB", partition_label, ext_flash->size / 1024);
+    const esp_partition_t* fat_partition;
+    ESP_ERROR_CHECK(esp_partition_register_external(ext_flash, 0, ext_flash->size, partition_label, ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_FAT, &fat_partition));
+    return fat_partition;
+}
+
+void example_list_data_partitions(void)
+{
+    ESP_LOGI(TAG, "Listing data partitions:");
+    esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, NULL);
+
+    for (; it != NULL; it = esp_partition_next(it)) {
+        const esp_partition_t *part = esp_partition_get(it);
+        ESP_LOGI(TAG, "- partition '%s', subtype %d, offset 0x%x, size %d kB",
+        part->label, part->subtype, part->address, part->size / 1024);
+    }
+
+    esp_partition_iterator_release(it);
+}
+
+bool example_mount_fatfs(const char* partition_label)
+{
+    ESP_LOGI(TAG, "Mounting FAT filesystem");
+    const esp_vfs_fat_mount_config_t mount_config = {
+            .format_if_mount_failed = true,
+            .max_files = 4,
+            .allocation_unit_size = CONFIG_WL_SECTOR_SIZE
+    };
+    esp_err_t err = esp_vfs_fat_spiflash_mount(base_path, partition_label, &mount_config, &s_wl_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
+        return false;
+    }
+    return true;
+}
+
+void example_get_fatfs_usage(size_t* out_total_bytes, size_t* out_free_bytes)
+{
+    FATFS *fs;
+    size_t free_clusters;
+    int res = f_getfree("0:", &free_clusters, &fs);
+    assert(res == FR_OK);
+    size_t total_sectors = (fs->n_fatent - 2) * fs->csize;
+    size_t free_sectors = free_clusters * fs->csize;
+
+    // assuming the total size is < 4GiB, should be true for SPI Flash
+    if (out_total_bytes != NULL) {
+        *out_total_bytes = total_sectors * fs->ssize;
+    }
+    if (out_free_bytes != NULL) {
+        *out_free_bytes = free_sectors * fs->ssize;
     }
 }
 
-/* Write arbitrary length data */
-void write_arbitrary_data(uint32_t addr, uint8_t *pbuf, uint32_t len)
-{
-    uint32_t secpos;
-    uint16_t secoff;
-    uint16_t secremain;
-    uint16_t i;
-    uint8_t *write_buf = pbuf;
-    uint8_t save_buffer[4096]; // save sector original data and add new data
-    secpos = addr / 4096;      // sector number
-    secoff = addr % 4096;      // sector offset
-    secremain = 4096 - secoff; // sector remaining space
-
-    if (len <= secremain)
-    {
-        secremain = len; // sector remaining space less than 4096
-    }
-    while (1)
-    {
-        read_data(secpos * 4096, save_buffer, 4096); // read sector data
-        for (i = 0; i < secremain; i++)
-        { // check data, if all data is 0xFF no need erase sector
-            if (save_buffer[secoff + i] != 0XFF)
-            { // need erase sector
-                break;
-            }
-        }
-        if (i < secremain)
-        { // erase sector and write data
-            sector_erase(secpos);
-            for (i = 0; i < secremain; i++)
-            {
-                save_buffer[i + secoff] = write_buf[i]; // add new data
-            }
-            write_one_sector_data(secpos * 4096, save_buffer, 4096); // write sector
-        }
-        else
-        { // no need erase sector
-            write_one_sector_data(addr, write_buf, secremain);
-        }
-        if (len == secremain)
-        { // write done
-            break;
-        }
-        else
-        {               // continue write
-            secpos++;   // sector number + 1
-            secoff = 0; // sector offset = 0
-
-            write_buf += secremain; // write buff offset
-            addr += secremain;      // addr offset
-            len -= secremain;       // remaining data len
-            if (len > 4096)
-            { // remaining data more than one sector(4096 byte)
-                secremain = 4096;
-            }
-            else
-            { // remaining data less than one sector(4096 byte)
-                secremain = len;
-            }
-        }
-    }
-}
-
-/* Read arbitrary length data */
-void read_data(uint32_t addr24, uint8_t *pbuf, uint32_t len)
-{
-    check_busy("read_data");
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(READ_DATA_CMD);
-    write_byte((uint8_t)(addr24 >> 16));
-    write_byte((uint8_t)(addr24 >> 8));
-    write_byte((uint8_t)addr24);
-    for (uint32_t i = 0; i < len; i++)
-    {
-        *pbuf = read_byte(0xFF);
-        pbuf++;
-    }
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-}
-
-/* Erase sector */
-void sector_erase(uint32_t addr24)
-{
-    addr24 *= 4096;
-    check_busy("sector_erase");
-    write_enable();
-
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(SECTOR_ERASE_CMD);
-    write_byte((uint8_t)(addr24 >> 16));
-    write_byte((uint8_t)(addr24 >> 8));
-    write_byte((uint8_t)addr24);
-
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-    check_busy("sector_erase");
-}
-
-/* Read norflash id */
-uint16_t read_norflash_id()
-{
-    uint8_t data = 0;
-    uint16_t device_id = 0;
-
-    digitalWrite(NORFLASH_CS_PIN, LOW);
-    write_byte(ManufactDeviceID_CMD);
-    write_byte(0x00);
-    write_byte(0x00);
-    write_byte(0x00);
-    data = read_byte(0);
-    device_id |= data; // low byte
-    data = read_byte(0);
-    device_id |= (data << 8); // high byte
-    digitalWrite(NORFLASH_CS_PIN, HIGH);
-
-    return device_id;
-}

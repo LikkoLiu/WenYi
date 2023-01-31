@@ -1,50 +1,61 @@
 #ifndef _MYFLASH_H
 #define _MYFLASH_H
-#include <Arduino.h>
-#include <SPI.h>
 
-// #define NORFLASH_DEBUG_ENABLE     // uart debug
-#define HARDWARE_SPI 1 // use hardware spi
-// #define SOFTWARE_SPI           // use software spi
 
-#define NORFLASH_CS_PIN 5
-#define NORFLASH_CLK_PIN 18
-#define NORFLASH_MOSI_PIN 23
-#define NORFLASH_MISO_PIN 19
-// #define NORFLASH_HOLD_PIN       9   // hold pin no connect 3.3V
-// #define NORFLASH_WP_PIN         14  // hold pin no connect 3.3V
-// #define NORFLASH_HOLD_PIN       -1     // hold pin connect 3.3V
-// #define NORFLASH_WP_PIN         -1     // wp pin connect 3.3V
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-#define ManufactDeviceID_CMD 0x90
-#define READ_JEDEC_ID_CMD 0x9F
-#define WRITE_STATUS 0x01
-#define READ_STATU_REGISTER_1 0x05
-#define READ_STATU_REGISTER_2 0x35
-#define READ_DATA_CMD 0x03
-#define WRITE_ENABLE_CMD 0x06
-#define WRITE_DISABLE_CMD 0x04
-#define SECTOR_ERASE_CMD 0x20
-#define CHIP_ERASE_CMD 0xC7
-#define PAGE_PROGRAM_CMD 0x02
+#include "esp_flash.h"
+#include "esp_flash_spi_init.h"
+#include "esp_partition.h"
+#include "esp_vfs.h"
+#include "esp_vfs_fat.h"
+#include "esp_system.h"
+#include "soc/spi_pins.h"
+#include "esp32-hal-log.h"
 
-#define ONE_PAGE_SIZE 256
-#define SPI_FREQUENCY 100000 // 时钟频率太大则无时钟输出
+// h4 and c2 will not support external flash
+#define EXAMPLE_FLASH_FREQ_MHZ      40
 
-// #define FLASH_TEST_ENABLE
+const char TAG[] = "example";
 
-uint16_t read_norflash_id();
-void sector_erase(uint32_t addr24);
-void read_data(uint32_t addr24, uint8_t *pbuf, uint32_t len);
-void write_arbitrary_data(uint32_t addr, uint8_t *pbuf, uint32_t len);
-void write_one_sector_data(uint32_t addr, uint8_t *pbuf, uint16_t len);
-void write_one_block_data(uint32_t addr, uint8_t *pbuf, uint16_t len);
-void check_busy(char *str);
-uint8_t read_status();
-void write_disable();
-void write_enable();
-uint8_t read_byte(uint8_t tx_data);
-void write_byte(uint8_t data);
-void norflash_spi_init();
+// Pin mapping
+// ESP32 (VSPI)
+#ifdef CONFIG_IDF_TARGET_ESP32
+#define HOST_ID  SPI3_HOST
+#define PIN_MOSI SPI3_IOMUX_PIN_NUM_MOSI
+#define PIN_MISO SPI3_IOMUX_PIN_NUM_MISO
+#define PIN_CLK  SPI3_IOMUX_PIN_NUM_CLK
+#define PIN_CS   SPI3_IOMUX_PIN_NUM_CS
+#define PIN_WP   SPI3_IOMUX_PIN_NUM_WP
+#define PIN_HD   SPI3_IOMUX_PIN_NUM_HD
+#define SPI_DMA_CHAN SPI_DMA_CH_AUTO
+#else // Other chips (SPI2/HSPI)
+#define HOST_ID  SPI2_HOST
+#define PIN_MOSI SPI2_IOMUX_PIN_NUM_MOSI
+#define PIN_MISO SPI2_IOMUX_PIN_NUM_MISO
+#define PIN_CLK  SPI2_IOMUX_PIN_NUM_CLK
+#define PIN_CS   SPI2_IOMUX_PIN_NUM_CS
+#define PIN_WP   SPI2_IOMUX_PIN_NUM_WP
+#define PIN_HD   SPI2_IOMUX_PIN_NUM_HD
+#define SPI_DMA_CHAN SPI_DMA_CH_AUTO
+#endif
+
+// Handle of the wear levelling library instance
+// int32_t s_wl_handle = WL_INVALID_HANDLE;
+
+// Mount path for the partition
+const char base_path[] = "/extflash";
+
+void myflash_init(void);
+esp_flash_t* example_init_ext_flash(void);
+const esp_partition_t* example_add_partition(esp_flash_t* ext_flash, const char* partition_label);
+void example_list_data_partitions(void);
+bool example_mount_fatfs(const char* partition_label);
+void example_get_fatfs_usage(size_t* out_total_bytes, size_t* out_free_bytes);
+
+
 
 #endif
+

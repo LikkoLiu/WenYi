@@ -42,7 +42,7 @@ void setup()
 #endif
   /****************************************************************/
 
-  norflash_spi_init();
+  // norflash_spi_init();
 
 #ifdef FLASH_TEST_ENABLE
   /* readwrite test */
