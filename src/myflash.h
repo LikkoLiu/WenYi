@@ -1,7 +1,7 @@
 #ifndef _MYFLASH_H
 #define _MYFLASH_H
 
-
+#include <Arduino.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -6,6 +6,8 @@ wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 void myflash_init(void)
 {
     // Set up SPI bus and initialize the external SPI Flash chip
+    // esp_log_level_set("example", ESP_LOG_INFO);
+
     esp_flash_t* flash = example_init_ext_flash();
     if (flash == NULL) {
         return;
@@ -26,24 +28,37 @@ void myflash_init(void)
     // Print FAT FS size information
     size_t bytes_total, bytes_free;
     example_get_fatfs_usage(&bytes_total, &bytes_free);
-    ESP_LOGI(TAG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
+    // ESP_LOGI(TAG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
+
+    Serial.printf("FAT FS: %d kB total, %d kB free\r\n", bytes_total / 1024, bytes_free / 1024);
 
     // Create a file in FAT FS
-    ESP_LOGI(TAG, "Opening file");
+    // ESP_LOGI(TAG, "Opening file");
+
+    Serial.printf("Opening file\r\n");
+
     FILE *f = fopen("/extflash/hello.txt", "wb");
     if (f == NULL) {
-        ESP_LOGE(TAG, "Failed to open file for writing");
+        // ESP_LOGE(TAG, "Failed to open file for writing");
+
+        Serial.printf("Failed to open file for writing\r\n");
         return;
     }
     fprintf(f, "Written using ESP-IDF %s\n", esp_get_idf_version());
     fclose(f);
-    ESP_LOGI(TAG, "File written");
+    // ESP_LOGI(TAG, "File written");
+
+    Serial.printf("File written\r\n");
 
     // Open file for reading
-    ESP_LOGI(TAG, "Reading file");
+    // ESP_LOGI(TAG, "Reading file");
+    Serial.printf("Reading file\r\n");
+
     f = fopen("/extflash/hello.txt", "rb");
     if (f == NULL) {
-        ESP_LOGE(TAG, "Failed to open file for reading");
+        // ESP_LOGE(TAG, "Failed to open file for reading");
+
+        Serial.printf( "Failed to open file for reading\r\n");
         return;
     }
     char line[128];
@@ -54,7 +69,9 @@ void myflash_init(void)
     if (pos) {
         *pos = '\0';
     }
-    ESP_LOGI(TAG, "Read from file: '%s'", line);
+    // ESP_LOGI(TAG, "Read from file: '%s'", line);
+    
+    Serial.printf("Read from file: '%s'", line);
 }
 
 esp_flash_t* example_init_ext_flash(void)
@@ -63,8 +80,8 @@ esp_flash_t* example_init_ext_flash(void)
         .mosi_io_num = VSPI_IOMUX_PIN_NUM_MOSI,
         .miso_io_num = VSPI_IOMUX_PIN_NUM_MISO,
         .sclk_io_num = VSPI_IOMUX_PIN_NUM_CLK,
-        .quadwp_io_num = VSPI_IOMUX_PIN_NUM_WP,
-        .quadhd_io_num = VSPI_IOMUX_PIN_NUM_HD,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
     };
 
     const esp_flash_spi_device_config_t device_config = {

@@ -42,10 +42,11 @@ void setup()
 #endif
   /****************************************************************/
 
-  // norflash_spi_init();
 
 #ifdef FLASH_TEST_ENABLE
-  /* readwrite test */
+  /* readwrite test */  
+  norflash_spi_init();
+
   int g = 0;
   uint8_t str[1280];
   memset(str, 0, sizeof(str));
@@ -83,6 +84,7 @@ void setup()
     Serial.printf("%02X ", str[k]);
   }
 #endif
+  myflash_init();
 
   Wifi_init_succ = 0;
 
