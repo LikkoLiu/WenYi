@@ -13,82 +13,20 @@ uint8_t _I2C_AS7341INIT_Flag = 0;
 
 void setup()
 {
-  pinMode(15, OUTPUT);		//外围传感器通电控制 
+  pinMode(15, OUTPUT); // 外围传感器通电控制
   digitalWrite(15, LOW);
   Serial.begin(115200);
 
-  setCpuFrequencyMhz(80);	//设置CPU主频为80MHz
-  // Serial.println(getCpuFrequencyMhz());
+  setCpuFrequencyMhz(80); // 设置CPU主频为80MHz
+  ESP_LOGI("CPU: ", "CPU clock be set to %u MHz", getCpuFrequencyMhz());
 
-  delay(200);
-  digitalWrite(15, HIGH);	//CPU正常启动后亮灯 
+  vTaskDelay(300 / portTICK_PERIOD_MS);
+  digitalWrite(15, HIGH); // CPU正常启动后亮灯闪烁
 
-  UVInit();
+  UVInit(); // UV传感器初始化配置
+  myflash_init(); // extr flash 初始化配置
 
-  /*************************** POWER ******************************/
-  // Print the wakeup reason for ESP32
-  // print_wakeup_reason();
-  /*
-  First we configure the wake up source
-  We set our ESP32 to wake up every 5 seconds
-  */
-  // if (TIME_TO_SLEEP > 0)
-  //   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-
-#if serialpower_log
-  Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
-                 " Seconds");
-  Serial.println();
-#endif
-  /****************************************************************/
-
-
-#ifdef FLASH_TEST_ENABLE
-  /* readwrite test */  
-  norflash_spi_init();
-
-  int g = 0;
-  uint8_t str[1280];
-  memset(str, 0, sizeof(str));
-  unsigned int j = 0;
-  for (int k = 0; k < 5; k++)
-  {
-    for (int i = 0; i < 256; i++)
-    {
-      str[j] = i;
-      j++;
-    }
-  }
-  Serial.println("");
-  Serial.println("-----write data-------");
-  sector_erase(0x00);
-  write_one_sector_data(0x10, str, 256);
-  memset(str, 0, sizeof(str));
-  read_data(0x00, str, 512);
-  Serial.println("str:");
-  for (int k = 0; k < 512; k++)
-  {
-    if (g == 16)
-    {
-      Serial.println("|");
-      if (k % 256 == 0)
-        Serial.println("---------------");
-      {
-        g = 1;
-      }
-    }
-    else
-    {
-      g++;
-    }
-    Serial.printf("%02X ", str[k]);
-  }
-#endif
-  myflash_init();
-
-  Wifi_init_succ = 0;
-
-  // vTaskDelay(5000 / portTICK_PERIOD_MS);();/
+  Wifi_init_succ = 0; // WiFi关闭标志
 }
 
 void loop()

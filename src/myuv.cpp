@@ -25,6 +25,7 @@ unsigned int averageAnalogRead(int pinToRead)
 void UVInit()
 {
     pinMode(ReadUVintensityPin, INPUT);
+    ESP_LOGI("UV: ","UV is successful build");
 }
 
 void UVDisplay()
