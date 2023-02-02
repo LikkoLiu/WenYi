@@ -18,7 +18,7 @@
 // h4 and c2 will not support external flash
 #define EXAMPLE_FLASH_FREQ_MHZ      40
 
-const char TAG[] = "example";
+const char TAG[] = "flash";
 
 // Pin mapping
 // ESP32 (VSPI)

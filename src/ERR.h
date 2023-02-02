@@ -16,4 +16,6 @@
 #define Succ_disconnect 0x15
 #define Succ_AS7341_Init 0x31
 
+const char DEBUG_WIFI[] = "DeBug_WIFI";
+
 #endif

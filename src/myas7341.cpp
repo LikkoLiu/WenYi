@@ -6,18 +6,14 @@ RTC_DATA_ATTR uint8_t gainval;
 
 void AS7341init()
 {
-#if serialAS7341_log
-    Serial.println("find AS7341");
-#endif
+    ESP_LOGI("DEBUG_AS7341", "AS7341 finding ......");
 
     while (!as7341.begin())
     {
-        delay(200);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
         Serial.printf("%c", 0xEE);
         Serial.printf("%c", ERR_AS7341_Init);
-#if serialAS7341_log
-        Serial.print(". ");
-#endif
+        ESP_LOGI("DEBUG_AS7341", "AS7341 couldn't find");
     }
 
     as7341.setATIME(100);
@@ -39,6 +35,7 @@ void AS7341Scan()
 #endif
         Serial.printf("%c", 0xEE);
         Serial.printf("%c", ERR_AS7341_read);
+        ESP_LOGI("DEBUG_AS7341", "AS7341 couldn't read");
         return;
     }
 

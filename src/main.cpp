@@ -20,7 +20,7 @@ void setup()
   setCpuFrequencyMhz(80); // 设置CPU主频为80MHz
   ESP_LOGI("CPU: ", "CPU clock be set to %u MHz", getCpuFrequencyMhz());
 
-  vTaskDelay(300 / portTICK_PERIOD_MS);
+  vTaskDelay(200 / portTICK_PERIOD_MS);
   digitalWrite(15, HIGH); // CPU正常启动后亮灯闪烁
 
   UVInit(); // UV传感器初始化配置
@@ -43,6 +43,7 @@ void loop()
     WiFi.mode(WIFI_OFF);
     Serial.printf("%c", 0xFF);
     Serial.printf("%c", Succ_disconnect);
+    ESP_LOGI(DEBUG_WIFI, "WiFI_OFF is successed");
     Wifi_init_succ = 0;
   }
 
@@ -51,7 +52,6 @@ void loop()
     if (AS7341_SCAN_flag)
     {
       digitalWrite(15, LOW);
-
       if (!_I2C_AS7341INIT_Flag)
       {
         AS7341init();
@@ -86,19 +86,22 @@ void loop()
       UVDisplay();
       digitalWrite(15, HIGH);
     }
-
     if (SINGLE_flag == 1)
       SINGLE_flag = 2;
   }
 
-  // Serial.printf("TIME_TO_SLEEP is : %d\r\n",TIME_TO_SLEEP);
   if ((TIME_TO_SLEEP > 0) && (SINGLE_flag == 0))
   {
     serialEvent();
+
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+
     serialEvent();
-    Serial.println("Going to sleep now");
+
+    ESP_LOGI("DEBUG_SLEEP", "Going to sleep now");
+
     serialEvent();
+
     esp_deep_sleep_start();
   }
 }

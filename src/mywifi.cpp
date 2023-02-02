@@ -28,22 +28,18 @@ void wifi_ap_init()
 
     if (Udp.begin(localUdpPort))
     { // 启动Udp监听服务
-#if 1
-        Serial.printf("%c", 0xFF);
-        Serial.printf("%c", Succ_Init); // 向串口打印信息
-                                        // 打印本地的ip地址
-                                        //  WiFi.localIP().toString().c_str()用于将获取的本地IP地址转化为字符串
-                                        // Serial.printf("UDP_Port: %d\r\n", localUdpPort);
-#endif
+        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is builded");
+        Wifi_init_succ = 1;
     }
     else
     {
 #if serialwifi_log
         Serial.printf("%c", 0xEE);
         Serial.printf("%c", ERR_InitErr); // 向串口打印信息
+        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is defeated"); 
 #endif
     }
-    Wifi_init_succ = 1;
+    
 }
 
 void wifiEvent()

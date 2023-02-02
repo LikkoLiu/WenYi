@@ -34,20 +34,20 @@ void myflash_init(void)
     // Create a file in FAT FS
     ESP_LOGI(TAG, "Opening file");
 
-    FILE *f = fopen("/extflash/hello.txt", "wb");
-    if (f == NULL)
-    {
-        ESP_LOGE(TAG, "Failed to open file for writing");
-        return;
-    }
-    fprintf(f, "Written using ESP-IDF %s\n", esp_get_idf_version());
-    fclose(f);
-    ESP_LOGI(TAG, "File written");
+    // FILE *f = fopen("/extflash/hello.txt", "wb");
+    // if (f == NULL)
+    // {
+    //     ESP_LOGE(TAG, "Failed to open file for writing");
+    //     return;
+    // }
+    // fprintf(f, "Written using ESP-IDF %s\n", esp_get_idf_version());
+    // fclose(f);
+    // ESP_LOGI(TAG, "File written");
 
     // Open file for reading
     ESP_LOGI(TAG, "Reading file");
 
-    f = fopen("/extflash/hello.txt", "rb");
+    FILE *f = fopen("/extflash/hello.txt", "rb");
     if (f == NULL)
     {
         // ESP_LOGE(TAG, "Failed to open file for reading");
@@ -141,7 +141,7 @@ bool example_mount_fatfs(const char *partition_label)
 {
     ESP_LOGI(TAG, "Mounting FAT filesystem");
     const esp_vfs_fat_mount_config_t mount_config = {
-        .format_if_mount_failed = true,
+        .format_if_mount_failed = false,
         .max_files = 4,
         .allocation_unit_size = CONFIG_WL_SECTOR_SIZE};
     esp_err_t err = esp_vfs_fat_spiflash_mount(base_path, partition_label, &mount_config, &s_wl_handle);

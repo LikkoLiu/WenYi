@@ -93,9 +93,8 @@ float Kalman_Filter(float Accel, float Gyro)
 
 void MPU6050Init()
 {
-#if serialbmi160_log
-    Serial.println("\r\nBMI160 reset");
-#endif
+    ESP_LOGI("DEBUG_BMI60", "BMI160 finding ");
+
     while (bmi160.softReset() != BMI160_OK)
     {
 #if serialbmi160_log
@@ -107,9 +106,7 @@ void MPU6050Init()
     }
 
     // set and init the bmi160 i2c address
-#if serialbmi160_log
-    Serial.println("\r\nBMI160 init");
-#endif
+    ESP_LOGI("DEBUG_BMI60", "BMI160 init ");
     while (bmi160.I2cInit(i2c_addr) != BMI160_OK)
     {
 #if serialbmi160_log
