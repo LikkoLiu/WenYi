@@ -68,7 +68,7 @@ void UVDisplay()
             wifi_printf(ERR_Format); // 打印信息
         }
     }
-
+    Flash_Write_float_Data("C", uvIntensity);
     // if (cyclesCount == 10)
     //   UV[bootCount - 1] = uvIntensity;
     // wifi_printf(" UV Intensity: ", uvIntensity);

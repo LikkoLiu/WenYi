@@ -2,6 +2,77 @@
 
 wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 
+// void readDataInChunks(const char *filename, size_t chunkSize)
+// {
+//     FILE *f = fopen("/extflash/hello.txt", "wb");
+//     if (f== NULL)
+//     {
+//         ESP_LOGE(TAG, "Failed to open file for writing");
+//         return;
+//     }
+
+//     size_t fileSize = ();
+//     size_t numChunks = (fileSize + chunkSize - 1) / chunkSize;
+
+//     for (size_t i = 0; i < numChunks; i++) {
+//         size_t bytesToRead = min(chunkSize, fileSize - i * chunkSize);
+//         uint8_t *data = new uint8_t[bytesToRead];
+
+//         size_t bytesRead = file.read(data, bytesToRead);
+//         if (bytesRead != bytesToRead) {
+//             Serial.println("Failed to read all data");
+//             break;
+//         }
+
+//         // Do something with the data, e.g. send it to another device
+//         // ...
+
+//         delete[] data;
+//     }
+
+//     file.close();
+// }
+
+void read_data_in_batches(char *file_name)
+{
+    FILE *file = fopen(file_name, "rb");
+    // 打开文件
+    if (file == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        return;
+    }
+    ESP_LOGI(TAG, "Opening file");
+
+    // 检测文件大小
+    fseek(file, 0, SEEK_END);
+    uint32_t file_size = ftell(file);
+    rewind(file);
+
+    // Allocate a buffer to store the data
+    uint8_t *data = new uint8_t[CHUNK_SIZE];
+
+    // Read the data in chunks of CHUNK_SIZE
+    for (uint32_t offset = 0; offset < file_size; offset += CHUNK_SIZE)
+    {
+        size_t bytes_to_read = min((uint32_t)CHUNK_SIZE, file_size - offset);
+        size_t bytes_read = fread(data, 1, bytes_to_read, file);
+
+        // Use the read data as needed
+        ESP_LOGI(TAG, "Read from file: '%s'", data);
+        vTaskDelay(20 / portTICK_PERIOD_MS);
+        // Check if there was an error reading the data
+        // if (bytes_read != bytes_to_read)
+        // {
+        //     // Error reading the data
+        //     break;
+        // }
+    }
+    // Clean up
+    delete[] data;
+    fclose(file);
+}
+
 void myflash_init(void)
 {
     // Set up SPI bus and initialize the external SPI Flash chip
@@ -32,7 +103,7 @@ void myflash_init(void)
     ESP_LOGI(TAG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
 
     // Create a file in FAT FS
-    ESP_LOGI(TAG, "Opening file");
+    // ESP_LOGI(TAG, "Opening file");
 
     // FILE *f = fopen("/extflash/hello.txt", "wb");
     // if (f == NULL)
@@ -46,25 +117,24 @@ void myflash_init(void)
 
     // Open file for reading
     ESP_LOGI(TAG, "Reading file");
-
-    FILE *f = fopen("/extflash/hello.txt", "rb");
-    if (f == NULL)
-    {
-        // ESP_LOGE(TAG, "Failed to open file for reading");
-
-        Serial.printf("Failed to open file for reading\r\n");
-        return;
-    }
-    char line[128];
-    fgets(line, sizeof(line), f);
-    fclose(f);
-    // strip newline
-    char *pos = strchr(line, '\n');
-    if (pos)
-    {
-        *pos = '\0';
-    }
-    ESP_LOGI(TAG, "Read from file: '%s'", line);
+    // uint8_t line[1 * 1024];
+    // FILE *f = fopen("/extflash/hello.txt", "rb");
+    // if (f == NULL)
+    // {
+    //     ESP_LOGE(TAG, "Failed to open file for reading");
+    //     return;
+    // }
+    //
+    // fgets(line, sizeof(line), f);
+    // fclose(f);
+    // // strip newline
+    // char *pos = strchr(line, '\n');
+    // if (pos)
+    // {
+    //     *pos = '\0';
+    // }
+    read_data_in_batches("/extflash/hello.txt");
+    // ESP_LOGI(TAG, "Read from file: \r\n'%s'", line);
 }
 
 esp_flash_t *example_init_ext_flash(void)
@@ -171,4 +241,90 @@ void example_get_fatfs_usage(size_t *out_total_bytes, size_t *out_free_bytes)
     {
         *out_free_bytes = free_sectors * fs->ssize;
     }
+}
+
+void hex2string(char *hex, char *ascII, int len, int *newlen)
+{
+    int i = 0;
+    char newchar[100] = {0};
+    *newlen = len * 3;
+    for (i = 0; i < len; i++)
+    {
+        sprintf(newchar, "%02X ", hex[i]);
+        strcat(ascII, newchar);
+    }
+}
+
+void Flash_Write_Data(const char *data_flag, uint16_t *val, uint8_t count, uint8_t gainval)
+{
+    uint8_t chval = 0;
+    uint8_t hexSendBuff[4];
+    FILE *f = fopen("/extflash/hello.txt", "a");
+    if (f == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return;
+    }
+    fprintf(f, "#%s%d#", data_flag, gainval);
+    for (size_t i = 0; i < count; i++)
+    {
+        // hexSendBuff[0] = (0xff00 & val[i]) >> 8;
+        // hexSendBuff[1] = (0xff & val[i]);
+        // // hexSendBuff[2] = (0xff & chval);
+        // hexSendBuff[2] = chval << 4;
+        // hexSendBuff[2] += gainval;
+        // for (i = 0; i < 3; i++)
+        // {
+        fprintf(f, "B%d", val[i]);
+        // }
+        // chval++;
+    }
+    fclose(f);
+    ESP_LOGI(TAG, "File written");
+}
+
+void Flash_Write_float_Data(const char *data_flag, float val)
+{
+    FILE *f = fopen("/extflash/hello.txt", "a");
+    if (f == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return;
+    }
+    // for (size_t i = 0; i < count; i++)
+    // {
+    // hexSendBuff[0] = (0xff00 & val[i]) >> 8;
+    // hexSendBuff[1] = (0xff & val[i]);
+    // // hexSendBuff[2] = (0xff & chval);
+    // hexSendBuff[2] = chval << 4;
+    // hexSendBuff[2] += gainval;
+    // for (i = 0; i < 3; i++)
+    // {
+    fprintf(f, "%s%.2f", data_flag, val);
+    // }
+    // chval++;
+    // }
+    fclose(f);
+    ESP_LOGI(TAG, "File written");
+}
+
+void Flash_Write_RTC()
+{
+    time_t now = 0;
+    struct tm timeinfo = {0};
+    int retry = 0;
+    char strftime_buf[64];
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    FILE *f = fopen("/extflash/hello.txt", "a");
+    if (f == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to open file for writing");
+        return;
+    }
+    fprintf(f, "@%s@", strftime_buf);
+    fclose(f);
+    ESP_LOGI(TAG, "The current date/time in HANGZHOU is: %s", strftime_buf);
+    ESP_LOGI(TAG, "File written");
 }

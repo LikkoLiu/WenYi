@@ -7,6 +7,7 @@
 #include <lowpower.h>
 #include <myflash.h>
 #include "esp32-hal-cpu.h"
+#include <RTCclock.h>
 
 uint8_t _I2C_BMI160INIT_Flag = 0;
 uint8_t _I2C_AS7341INIT_Flag = 0;
@@ -27,6 +28,7 @@ void setup()
   myflash_init(); // extr flash 初始化配置
 
   Wifi_init_succ = 0; // WiFi关闭标志
+  esp_wait_sntp_sync();
 }
 
 void loop()
@@ -49,6 +51,7 @@ void loop()
 
   if (SINGLE_flag == 0 || SINGLE_flag == 1)
   {
+    Flash_Write_RTC();
     if (AS7341_SCAN_flag)
     {
       digitalWrite(15, LOW);
@@ -88,6 +91,7 @@ void loop()
     }
     if (SINGLE_flag == 1)
       SINGLE_flag = 2;
+
   }
 
   if ((TIME_TO_SLEEP > 0) && (SINGLE_flag == 0))

@@ -12,6 +12,9 @@ IPAddress subnet(255, 255, 255, 0);
 unsigned int localUdpPort = 1210; // 自定义本地监听端口
 uint8_t incomingPacket[256];      // 保存Udp工具发过来的消息
 
+const char *WIFIssid = "liu"; // The SSID (name) of the Wi-Fi network you want to connect to
+const char *WIFIpassword = "33333333";
+
 // 向udp工具发送消息
 void wifi_printf(char buffer /*, char *Val*/)
 {
@@ -36,10 +39,23 @@ void wifi_ap_init()
 #if serialwifi_log
         Serial.printf("%c", 0xEE);
         Serial.printf("%c", ERR_InitErr); // 向串口打印信息
-        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is defeated"); 
+        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is defeated");
 #endif
     }
-    
+}
+
+void wifi_sta_connect()
+{
+    WiFi.begin(WIFIssid, WIFIpassword); // Connect to the network
+    ESP_LOGI(DEBUG_WIFI, "WIFI Connecting ");
+
+    while (WiFi.status() != WL_CONNECTED)
+    { // Wait for the Wi-Fi to connect
+        delay(500);
+        Serial.print('.');
+    }
+    ESP_LOGI(DEBUG_WIFI, " Connection established!");
+    ESP_LOGI(DEBUG_WIFI, "IP address:%d", WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
 }
 
 void wifiEvent()

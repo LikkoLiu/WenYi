@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Adafruit_AS7341.h>
 #include <communication.h>
+#include "myflash.h"
 #define serialAS7341_log 0
 
 

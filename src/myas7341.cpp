@@ -107,4 +107,6 @@ void AS7341Scan()
             wifi_printf(ERR_Format); // 打印信息
         }
     }
+    Flash_Write_Data("B", readings, 10, gainval);
+    
 }

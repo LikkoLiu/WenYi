@@ -253,8 +253,8 @@ void BMI160_math_display()
             wifi_printf(ERR_Format); // 打印信息
         }
     }
-
-    delay(60);
+    Flash_Write_float_Data("A", Angle);
+    // delay(60);
     /***************************************************************/
     //   Kalman_Filter(ay_angle, gxro);
 

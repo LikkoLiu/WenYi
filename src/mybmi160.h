@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <DFRobot_BMI160.h>
 #include <communication.h>
+#include "myflash.h"
 #define serialbmi160_log 0
 
 /* 把mpu6050放在水平桌面上，分别读取读取2000次，然后求平均值 */
