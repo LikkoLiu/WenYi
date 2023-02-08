@@ -35,6 +35,7 @@ RTC_DATA_ATTR extern uint8_t AS7341_SCAN_flag;
 RTC_DATA_ATTR extern uint8_t UV_SCAN_flag;
 RTC_DATA_ATTR extern uint8_t SINGLE_flag;
 RTC_DATA_ATTR extern uint8_t COMMNUI_CH_flag;
+RTC_DATA_ATTR extern uint8_t Flash_read_flag;
 extern uint8_t table_data[9]; // 这是提前定义一个数组存放接收到的数据
 extern uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据复制到这里面
 extern uint16_t count;        // 接收数据计数

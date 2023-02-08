@@ -3,6 +3,7 @@
 Adafruit_AS7341 as7341;
 uint16_t readings[12];
 RTC_DATA_ATTR uint8_t gainval;
+float UVdata_Fake = 0.0;
 
 void AS7341init()
 {
@@ -38,6 +39,8 @@ void AS7341Scan()
         ESP_LOGI("DEBUG_AS7341", "AS7341 couldn't read");
         return;
     }
+
+    UVdata_Fake = readings[0] * 5.0 / 65536;
 
     if (HEX_Format_flag)
     {
@@ -108,5 +111,4 @@ void AS7341Scan()
         }
     }
     Flash_Write_Data("B", readings, 10, gainval);
-    
 }

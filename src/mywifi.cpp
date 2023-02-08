@@ -31,31 +31,36 @@ void wifi_ap_init()
 
     if (Udp.begin(localUdpPort))
     { // 启动Udp监听服务
-        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is builded");
+        ESP_LOGI(INFO_DEBUG, "WiFI_begin is builded");
         Wifi_init_succ = 1;
     }
     else
     {
 #if serialwifi_log
-        Serial.printf("%c", 0xEE);
-        Serial.printf("%c", ERR_InitErr); // 向串口打印信息
-        ESP_LOGI(DEBUG_WIFI, "WiFI_begin is defeated");
+        // Serial.printf("%c", 0xEE);
+        // Serial.printf("%c", ERR_InitErr); // 向串口打印信息
+        ESP_LOGE(ERROR_DEBUG, "WiFI_begin is defeated");
 #endif
     }
 }
 
-void wifi_sta_connect()
+uint8_t wifi_sta_connect()
 {
     WiFi.begin(WIFIssid, WIFIpassword); // Connect to the network
-    ESP_LOGI(DEBUG_WIFI, "WIFI Connecting ");
-
+    ESP_LOGI(INFO_DEBUG, "WIFI Connecting ");
+    int count = 0;
     while (WiFi.status() != WL_CONNECTED)
     { // Wait for the Wi-Fi to connect
-        delay(500);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        if(++count > 5)
+        {
+            return 1;
+        }
         Serial.print('.');
     }
-    ESP_LOGI(DEBUG_WIFI, " Connection established!");
-    ESP_LOGI(DEBUG_WIFI, "IP address:%d", WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
+    ESP_LOGI(INFO_DEBUG, " Connection established!");
+    ESP_LOGI(INFO_DEBUG, "IP address:%d", WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
+    return 0;
 }
 
 void wifiEvent()

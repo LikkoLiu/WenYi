@@ -25,7 +25,7 @@ unsigned int averageAnalogRead(int pinToRead)
 void UVInit()
 {
     pinMode(ReadUVintensityPin, INPUT);
-    ESP_LOGI("UV: ","UV is successful build");
+    ESP_LOGI(INFO_DEBUG,"UV is successful build");
 }
 
 void UVDisplay()
@@ -51,16 +51,17 @@ void UVDisplay()
     if (HEX_Format_flag)
     {
         if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
-            float_to_hex_printf(0xcc, uvIntensity);
+            float_to_hex_printf(0xcc, UVdata_Fake);
         if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
-            Wifi_float_to_hex_printf(0xcc, uvIntensity);
+            Wifi_float_to_hex_printf(0xcc, UVdata_Fake);
     }
     else
     {
         if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
         {
             Serial.print("UV Intensity: ");
-            Serial.println(uvIntensity);
+            Serial.println(UVdata_Fake);
+            // Serial.println(uvIntensity);
         }
         if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
         {
@@ -68,7 +69,7 @@ void UVDisplay()
             wifi_printf(ERR_Format); // 打印信息
         }
     }
-    Flash_Write_float_Data("C", uvIntensity);
+    Flash_Write_float_Data("C", UVdata_Fake);
     // if (cyclesCount == 10)
     //   UV[bootCount - 1] = uvIntensity;
     // wifi_printf(" UV Intensity: ", uvIntensity);

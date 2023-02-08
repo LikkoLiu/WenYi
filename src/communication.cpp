@@ -7,6 +7,7 @@ RTC_DATA_ATTR uint8_t AS7341_SCAN_flag = 0;
 RTC_DATA_ATTR uint8_t UV_SCAN_flag = 0;
 RTC_DATA_ATTR uint8_t SINGLE_flag = 2;
 RTC_DATA_ATTR uint8_t COMMNUI_CH_flag = 0;
+RTC_DATA_ATTR uint8_t Flash_read_flag = 0;
 
 uint8_t table_data[9]; // 这是提前定义一个数组存放接收到的数据
 uint8_t table_cp[9];   // 这是额外定义一个数组，将接收到的数据复制到这里面

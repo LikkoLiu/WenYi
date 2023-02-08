@@ -18,7 +18,7 @@
 
 extern RTC_DATA_ATTR uint8_t RESTART;
 
-void esp_wait_sntp_sync(void);
+uint8_t esp_wait_sntp_sync(void);
 
 void time_sync_notification_cb(struct timeval *tv);
 

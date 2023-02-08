@@ -13,14 +13,13 @@
 #include "esp_vfs_fat.h"
 #include "esp_system.h"
 #include "soc/spi_pins.h"
+#include <ERR.h>
 #include "esp32-hal-log.h"
-
 
 // h4 and c2 will not support external flash
 #define EXAMPLE_FLASH_FREQ_MHZ 40
-#define CHUNK_SIZE (1 * 1024) // 256KB chunk size
-
-const char TAG[] = "flash";
+// #define CHUNK_SIZE (1 * 1024) // 256KB chunk size
+const uint32_t CHUNK_SIZE (1 * 1024);
 
 // Pin mapping
 // ESP32 (VSPI)
@@ -60,5 +59,7 @@ void Flash_Write_Data(const char *data_flag, uint16_t *val, uint8_t count, uint8
 void Flash_Write_RTC();
 void Flash_Write_float_Data(const char *data_flag, float val);
 void read_data_in_batches(char *file_name);
+void Flash_Writeln();
+void Flash_Erase_FATfile(char *file_name);
 
 #endif

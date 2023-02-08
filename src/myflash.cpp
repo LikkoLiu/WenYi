@@ -2,85 +2,67 @@
 
 wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 
-// void readDataInChunks(const char *filename, size_t chunkSize)
-// {
-//     FILE *f = fopen("/extflash/hello.txt", "wb");
-//     if (f== NULL)
-//     {
-//         ESP_LOGE(TAG, "Failed to open file for writing");
-//         return;
-//     }
-
-//     size_t fileSize = ();
-//     size_t numChunks = (fileSize + chunkSize - 1) / chunkSize;
-
-//     for (size_t i = 0; i < numChunks; i++) {
-//         size_t bytesToRead = min(chunkSize, fileSize - i * chunkSize);
-//         uint8_t *data = new uint8_t[bytesToRead];
-
-//         size_t bytesRead = file.read(data, bytesToRead);
-//         if (bytesRead != bytesToRead) {
-//             Serial.println("Failed to read all data");
-//             break;
-//         }
-
-//         // Do something with the data, e.g. send it to another device
-//         // ...
-
-//         delete[] data;
-//     }
-
-//     file.close();
-// }
-
 void read_data_in_batches(char *file_name)
 {
     FILE *file = fopen(file_name, "rb");
-    // 打开文件
+    // open file
     if (file == NULL)
     {
-        ESP_LOGE(TAG, "Failed to open file for reading");
+        ESP_LOGI(ERROR_DEBUG, "Failed to open file for reading");
         return;
     }
-    ESP_LOGI(TAG, "Opening file");
+    ESP_LOGI(INFO_DEBUG, "Opening file");
 
-    // 检测文件大小
+    ESP_LOGI(INFO_DEBUG, "Reading file");
+    // check file size
     fseek(file, 0, SEEK_END);
     uint32_t file_size = ftell(file);
     rewind(file);
 
-    // Allocate a buffer to store the data
-    uint8_t *data = new uint8_t[CHUNK_SIZE];
-
-    // Read the data in chunks of CHUNK_SIZE
-    for (uint32_t offset = 0; offset < file_size; offset += CHUNK_SIZE)
+    if (Flash_read_flag)
     {
-        size_t bytes_to_read = min((uint32_t)CHUNK_SIZE, file_size - offset);
-        size_t bytes_read = fread(data, 1, bytes_to_read, file);
+        // Allocate a buffer to store the data
+        uint8_t *data = new uint8_t[CHUNK_SIZE];
+        // Read the data in chunks of CHUNK_SIZE
+        ESP_LOGI(INFO_DEBUG, "Read from file : ");
+        for (uint32_t offset = 0; offset < file_size; offset += CHUNK_SIZE)
+        {
 
-        // Use the read data as needed
-        ESP_LOGI(TAG, "Read from file: '%s'", data);
-        vTaskDelay(20 / portTICK_PERIOD_MS);
-        // Check if there was an error reading the data
-        // if (bytes_read != bytes_to_read)
-        // {
-        //     // Error reading the data
-        //     break;
-        // }
+            size_t bytes_to_read = (CHUNK_SIZE > (file_size - offset)) ? (file_size - offset) : CHUNK_SIZE;
+            size_t bytes_read = fread(data, 1, bytes_to_read, file);
+
+            // Use the read data as needed
+            // ESP_LOGI(INFO_DEBUG, "%s", data);
+
+            ESP_LOGI(INFO_DEBUG,  "...... Flash read progress : %3d %% ......", (offset * 100) / file_size);
+            Serial.printf("\r\n%s\r\n\r\n", data);
+
+            // Check if there was an error reading the data
+            if (bytes_read != bytes_to_read)
+            {
+                ESP_LOGE(ERROR_DEBUG, "Error reading the data");
+                break;
+            }
+            // vTaskDelay(10 / portTICK_PERIOD_MS);
+            memset(data, 0, CHUNK_SIZE); // Clean up
+
+            ESP_LOGE(ERROR_DEBUG, "ERROR: 0\b%s", data);
+        }
+        delete[] data; // 动态数组销毁
+        ESP_LOGI(INFO_DEBUG, "...... Flash read progress : 100 %% ......");
     }
-    // Clean up
-    delete[] data;
     fclose(file);
+    Flash_read_flag = 0; // 擦除标志位
 }
 
 void myflash_init(void)
 {
     // Set up SPI bus and initialize the external SPI Flash chip
     // esp_log_level_set("example", ESP_LOG_INFO);
-
     esp_flash_t *flash = example_init_ext_flash();
     if (flash == NULL)
     {
+        // ESP_LOGE(ERROR_DEBUG, "Can't find flash!");
         return;
     }
 
@@ -100,23 +82,10 @@ void myflash_init(void)
     // Print FAT FS size information
     size_t bytes_total, bytes_free;
     example_get_fatfs_usage(&bytes_total, &bytes_free);
-    ESP_LOGI(TAG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
-
-    // Create a file in FAT FS
-    // ESP_LOGI(TAG, "Opening file");
-
-    // FILE *f = fopen("/extflash/hello.txt", "wb");
-    // if (f == NULL)
-    // {
-    //     ESP_LOGE(TAG, "Failed to open file for writing");
-    //     return;
-    // }
-    // fprintf(f, "Written using ESP-IDF %s\n", esp_get_idf_version());
-    // fclose(f);
-    // ESP_LOGI(TAG, "File written");
+    ESP_LOGI(INFO_DEBUG, "FAT FS: %d kB total, %d kB free", bytes_total / 1024, bytes_free / 1024);
 
     // Open file for reading
-    ESP_LOGI(TAG, "Reading file");
+
     // uint8_t line[1 * 1024];
     // FILE *f = fopen("/extflash/hello.txt", "rb");
     // if (f == NULL)
@@ -134,7 +103,6 @@ void myflash_init(void)
     //     *pos = '\0';
     // }
     read_data_in_batches("/extflash/hello.txt");
-    // ESP_LOGI(TAG, "Read from file: \r\n'%s'", line);
 }
 
 esp_flash_t *example_init_ext_flash(void)
@@ -155,9 +123,9 @@ esp_flash_t *example_init_ext_flash(void)
         .cs_id = 0,
     };
 
-    ESP_LOGI(TAG, "Initializing external SPI Flash");
-    ESP_LOGI(TAG, "Pin assignments:");
-    ESP_LOGI(TAG, "MOSI: %2d   MISO: %2d   SCLK: %2d   CS: %2d",
+    ESP_LOGI(INFO_DEBUG, "Initializing external SPI Flash");
+    ESP_LOGI(INFO_DEBUG, "Pin assignments :");
+    ESP_LOGI(INFO_DEBUG, "MOSI: %2d   MISO: %2d   SCLK: %2d   CS: %2d",
              bus_config.mosi_io_num, bus_config.miso_io_num,
              bus_config.sclk_io_num, device_config.cs_io_num);
 
@@ -172,21 +140,21 @@ esp_flash_t *example_init_ext_flash(void)
     esp_err_t err = esp_flash_init(ext_flash);
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to initialize external Flash: %s (0x%x)", esp_err_to_name(err), err);
+        ESP_LOGE(ERROR_DEBUG, "Failed to initialize external Flash: %s (0x%x)", esp_err_to_name(err), err);
         return NULL;
     }
 
     // Print out the ID and size
     uint32_t id;
     ESP_ERROR_CHECK(esp_flash_read_id(ext_flash, &id));
-    ESP_LOGI(TAG, "Initialized external Flash, size=%d KB, ID=0x%x", ext_flash->size / 1024, id);
+    ESP_LOGI(INFO_DEBUG, "Initialized external Flash, size=%d KB, ID=0x%x", ext_flash->size / 1024, id);
 
     return ext_flash;
 }
 
 const esp_partition_t *example_add_partition(esp_flash_t *ext_flash, const char *partition_label)
 {
-    ESP_LOGI(TAG, "Adding external Flash as a partition, label=\"%s\", size=%d KB", partition_label, ext_flash->size / 1024);
+    ESP_LOGI(INFO_DEBUG, "Adding external Flash as a partition, label=\"%s\", size=%d KB", partition_label, ext_flash->size / 1024);
     const esp_partition_t *fat_partition;
     ESP_ERROR_CHECK(esp_partition_register_external(ext_flash, 0, ext_flash->size, partition_label, ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_FAT, &fat_partition));
     return fat_partition;
@@ -194,13 +162,13 @@ const esp_partition_t *example_add_partition(esp_flash_t *ext_flash, const char 
 
 void example_list_data_partitions(void)
 {
-    ESP_LOGI(TAG, "Listing data partitions:");
+    ESP_LOGI(INFO_DEBUG, "Listing data partitions:");
     esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, NULL);
 
     for (; it != NULL; it = esp_partition_next(it))
     {
         const esp_partition_t *part = esp_partition_get(it);
-        ESP_LOGI(TAG, "- partition '%s', subtype %d, offset 0x%x, size %d kB",
+        ESP_LOGI(INFO_DEBUG, "- partition '%s', subtype %d, offset 0x%x, size %d kB",
                  part->label, part->subtype, part->address, part->size / 1024);
     }
 
@@ -209,7 +177,7 @@ void example_list_data_partitions(void)
 
 bool example_mount_fatfs(const char *partition_label)
 {
-    ESP_LOGI(TAG, "Mounting FAT filesystem");
+    ESP_LOGI(INFO_DEBUG, "Mounting FAT filesystem");
     const esp_vfs_fat_mount_config_t mount_config = {
         .format_if_mount_failed = false,
         .max_files = 4,
@@ -217,7 +185,7 @@ bool example_mount_fatfs(const char *partition_label)
     esp_err_t err = esp_vfs_fat_spiflash_mount(base_path, partition_label, &mount_config, &s_wl_handle);
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
+        ESP_LOGE(ERROR_DEBUG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
         return false;
     }
     return true;
@@ -262,25 +230,14 @@ void Flash_Write_Data(const char *data_flag, uint16_t *val, uint8_t count, uint8
     FILE *f = fopen("/extflash/hello.txt", "a");
     if (f == NULL)
     {
-        ESP_LOGE(TAG, "Failed to open file for writing");
+        ESP_LOGE(ERROR_DEBUG, "Failed to open file for writing");
         return;
     }
     fprintf(f, "#%s%d#", data_flag, gainval);
     for (size_t i = 0; i < count; i++)
-    {
-        // hexSendBuff[0] = (0xff00 & val[i]) >> 8;
-        // hexSendBuff[1] = (0xff & val[i]);
-        // // hexSendBuff[2] = (0xff & chval);
-        // hexSendBuff[2] = chval << 4;
-        // hexSendBuff[2] += gainval;
-        // for (i = 0; i < 3; i++)
-        // {
         fprintf(f, "B%d", val[i]);
-        // }
-        // chval++;
-    }
     fclose(f);
-    ESP_LOGI(TAG, "File written");
+    ESP_LOGI(INFO_DEBUG, "File written");
 }
 
 void Flash_Write_float_Data(const char *data_flag, float val)
@@ -288,24 +245,12 @@ void Flash_Write_float_Data(const char *data_flag, float val)
     FILE *f = fopen("/extflash/hello.txt", "a");
     if (f == NULL)
     {
-        ESP_LOGE(TAG, "Failed to open file for writing");
+        ESP_LOGE(ERROR_DEBUG, "Failed to open file for writing");
         return;
     }
-    // for (size_t i = 0; i < count; i++)
-    // {
-    // hexSendBuff[0] = (0xff00 & val[i]) >> 8;
-    // hexSendBuff[1] = (0xff & val[i]);
-    // // hexSendBuff[2] = (0xff & chval);
-    // hexSendBuff[2] = chval << 4;
-    // hexSendBuff[2] += gainval;
-    // for (i = 0; i < 3; i++)
-    // {
     fprintf(f, "%s%.2f", data_flag, val);
-    // }
-    // chval++;
-    // }
     fclose(f);
-    ESP_LOGI(TAG, "File written");
+    ESP_LOGI(INFO_DEBUG, "File written");
 }
 
 void Flash_Write_RTC()
@@ -320,11 +265,51 @@ void Flash_Write_RTC()
     FILE *f = fopen("/extflash/hello.txt", "a");
     if (f == NULL)
     {
-        ESP_LOGE(TAG, "Failed to open file for writing");
+        ESP_LOGE(ERROR_DEBUG, "Failed to open file for writing");
         return;
     }
     fprintf(f, "@%s@", strftime_buf);
     fclose(f);
-    ESP_LOGI(TAG, "The current date/time in HANGZHOU is: %s", strftime_buf);
-    ESP_LOGI(TAG, "File written");
+    ESP_LOGI(INFO_DEBUG, "The current date/time in HANGZHOU is: %s", strftime_buf);
+    ESP_LOGI(INFO_DEBUG, "File written");
+}
+
+void Flash_Writeln()
+{
+    FILE *f = fopen("/extflash/hello.txt", "a");
+    if (f == NULL)
+    {
+        ESP_LOGE(ERROR_DEBUG, "Failed to open file for writing");
+        return;
+    }
+    fprintf(f, "\r\n");
+    fclose(f);
+}
+
+void Flash_Erase_FATfile(char *file_name)
+{
+    const char *partition_label = "storage";
+    int res;
+    FILE *file = fopen(file_name, "wb");
+    fwrite(NULL, 0, 1, file);
+    fclose(file);
+    // // open file
+    // if (file == NULL)
+    // {
+    //     ESP_LOGI(ERROR_DEBUG, "Failed to open file for Erase");
+    //     return;
+    // }
+
+    res = remove(file_name);
+    if (res == 0)
+    {
+        ESP_LOGI(INFO_DEBUG, "%s file deleted successfully.", file_name);
+        fopen("/extflash/hello.txt", "wb");
+        if (res == FR_OK)
+            fclose(file);
+        else
+            ESP_LOGE(TAG, "Failed to open file for NEXT");
+    }
+    else
+        Serial.printf("Unable to delete the file\n");
 }

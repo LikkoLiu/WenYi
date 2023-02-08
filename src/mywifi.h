@@ -20,6 +20,6 @@ void wifiEvent();
 void Wifi_getEventFlag();
 void Wifi_float_to_hex_printf(uint8_t signnum, float num);
 void Wifi_uint16_to_hex_printf(uint16_t val, uint8_t chval, uint8_t gainval);
-void wifi_sta_connect();
+uint8_t wifi_sta_connect();
 
 #endif
