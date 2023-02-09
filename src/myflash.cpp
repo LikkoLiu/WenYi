@@ -13,14 +13,14 @@ void read_data_in_batches(char *file_name)
     }
     ESP_LOGI(INFO_DEBUG, "Opening file");
 
-    ESP_LOGI(INFO_DEBUG, "Reading file");
-    // check file size
-    fseek(file, 0, SEEK_END);
-    uint32_t file_size = ftell(file);
-    rewind(file);
-
     if (Flash_read_flag)
     {
+        ESP_LOGI(INFO_DEBUG, "Reading file");
+        // check file size
+        fseek(file, 0, SEEK_END);
+        uint32_t file_size = ftell(file);
+        rewind(file);
+
         // Allocate a buffer to store the data
         uint8_t *data = new uint8_t[CHUNK_SIZE];
         // Read the data in chunks of CHUNK_SIZE
@@ -34,7 +34,7 @@ void read_data_in_batches(char *file_name)
             // Use the read data as needed
             // ESP_LOGI(INFO_DEBUG, "%s", data);
 
-            ESP_LOGI(INFO_DEBUG,  "...... Flash read progress : %3d %% ......", (offset * 100) / file_size);
+            ESP_LOGI(INFO_DEBUG, "...... Flash read progress : %3d %% ......", (offset * 100) / file_size);
             Serial.printf("\r\n%s\r\n\r\n", data);
 
             // Check if there was an error reading the data
@@ -46,7 +46,7 @@ void read_data_in_batches(char *file_name)
             // vTaskDelay(10 / portTICK_PERIOD_MS);
             memset(data, 0, CHUNK_SIZE); // Clean up
 
-            ESP_LOGE(ERROR_DEBUG, "ERROR: 0\b%s", data);
+            ESP_LOGE(ERROR_DEBUG, "ERROR:%s", data);
         }
         delete[] data; // 动态数组销毁
         ESP_LOGI(INFO_DEBUG, "...... Flash read progress : 100 %% ......");
@@ -179,7 +179,7 @@ bool example_mount_fatfs(const char *partition_label)
 {
     ESP_LOGI(INFO_DEBUG, "Mounting FAT filesystem");
     const esp_vfs_fat_mount_config_t mount_config = {
-        .format_if_mount_failed = false,
+        .format_if_mount_failed = true,
         .max_files = 4,
         .allocation_unit_size = CONFIG_WL_SECTOR_SIZE};
     esp_err_t err = esp_vfs_fat_spiflash_mount(base_path, partition_label, &mount_config, &s_wl_handle);
@@ -260,7 +260,12 @@ void Flash_Write_RTC()
     int retry = 0;
     char strftime_buf[64];
     time(&now);
+
+    setenv("TZ", "CST-8", 1); // 时区设置需位于localtime_r(&now, &timeinfo)前
+    tzset();
+
     localtime_r(&now, &timeinfo);
+
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     FILE *f = fopen("/extflash/hello.txt", "a");
     if (f == NULL)
@@ -312,4 +317,83 @@ void Flash_Erase_FATfile(char *file_name)
     }
     else
         Serial.printf("Unable to delete the file\n");
+}
+
+void read_data_config(char *file_name)
+{
+    FILE *file = fopen(file_name, "rb");
+    // open file
+    if (file == NULL)
+    {
+        ESP_LOGI(ERROR_DEBUG, "Failed to open config.file for reading");
+        return;
+    }
+
+    ESP_LOGI(INFO_DEBUG, "Opening config.file");
+
+    // Allocate a buffer to store the data
+    uint8_t *data = new uint8_t[9];
+    // Read the data in chunks of CHUNK_SIZE
+
+    size_t bytes_read = fread(data, 1, 9, file);
+
+    // Use the read data as needed
+    HEX_Format_flag = data[6];
+    TIME_TO_SLEEP = data[7];
+    COMMNUI_CH_flag = data[5];
+    if (data[2] == 0x30)
+    {
+        _STOPACAN();
+    }
+
+    else if (data[2] == 0x31)
+    {
+        _BMI160();
+        SINGLE_flag = data[3];
+    }
+
+    else if (data[2] == 0x32)
+    {
+        _AS7341();
+        SINGLE_flag = data[3];
+        gainval = data[4];
+    }
+    else if (data[2] == 0x33)
+    {
+        _UV();
+        SINGLE_flag = data[3];
+    }
+    else if (data[2] == 0x34)
+    {
+        _ALLCAN();
+        SINGLE_flag = data[3];
+        gainval = data[4];
+    }
+
+    ESP_LOGI(INFO_DEBUG, "Read from config.file :%c", data);
+
+    // vTaskDelay(10 / portTICK_PERIOD_MS);
+    // memset(data, 0, CHUNK_SIZE); // Clean up
+
+    // ESP_LOGE(ERROR_DEBUG, "ERROR: 0\b%s", data);
+
+    delete[] data; // 动态数组销毁
+
+    fclose(file);
+}
+
+void Write_config_Data(uint8_t *val)
+{
+    uint8_t chval = 0;
+    uint8_t hexSendBuff[4];
+    FILE *f = fopen("/extflash/config.txt", "w");
+    if (f == NULL)
+    {
+        ESP_LOGE(ERROR_DEBUG, "Failed to open config.file for writing");
+        return;
+    }
+    for (size_t i = 0; i < 9; i++)
+        fprintf(f, "%c", val[i]);
+    fclose(f);
+    ESP_LOGI(INFO_DEBUG, "config.file written");
 }

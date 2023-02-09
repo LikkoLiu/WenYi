@@ -54,7 +54,7 @@ uint8_t esp_wait_sntp_sync(void)
     // Serial.println("OK");
     WiFi.mode(WIFI_OFF);
     // Serial.println("OK");
-    ESP_LOGE(INFO_DEBUG, "system time is build, WiFI_OFF is successed!");
+    ESP_LOGI(INFO_DEBUG, "system time is build, WiFI_OFF is successed!");
 
     return 0;
 }

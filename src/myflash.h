@@ -61,5 +61,7 @@ void Flash_Write_float_Data(const char *data_flag, float val);
 void read_data_in_batches(char *file_name);
 void Flash_Writeln();
 void Flash_Erase_FATfile(char *file_name);
+void read_data_config(char *file_name);
+void Write_config_Data(uint8_t *val);
 
 #endif

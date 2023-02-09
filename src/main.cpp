@@ -10,12 +10,11 @@
 #include <RTCclock.h>
 #include <GPIOISR.h>
 
-RTC_DATA_ATTR uint8_t _I2C_BMI160INIT_Flag = 0;
-RTC_DATA_ATTR uint8_t _I2C_AS7341INIT_Flag = 0;
+uint8_t _I2C_BMI160INIT_Flag = 0;
+uint8_t _I2C_AS7341INIT_Flag = 0;
 
 void setup()
 {
-
   pinMode(25, INPUT_PULLUP);
   if (digitalRead(25))
   {
@@ -29,29 +28,27 @@ void setup()
   }
   pinMode(15, OUTPUT);
   digitalWrite(15, HIGH);
+
   Serial.begin(115200);
   if (setCpuFrequencyMhz(80)) // 设置CPU主频为80MHz
     ESP_LOGI(INFO_DEBUG, "CPU clock be set to %u MHz", getCpuFrequencyMhz());
+
   UVInit();       // UV传感器初始化配置
   myflash_init(); // extr flash 初始化配置
-  Serial.println("OK1");
+
   if (TIME_TO_SLEEP == 0)
   {
-    Serial.println("OK2");
-    if (esp_wait_sntp_sync())
-      ESP_LOGI(INFO_DEBUG, "WIFI disconnected, Skiping system time SET.");
+    // if (esp_wait_sntp_sync())
+    //   ESP_LOGI(INFO_DEBUG, "WIFI disconnected, Skiping system time SET.");
   }
-  Serial.println("OK3");
-  Wifi_init_succ = 0;    // WiFi关闭标志
-  digitalWrite(15, LOW); // 外围传感器通电控制
+  Wifi_init_succ = 0; // WiFi关闭标志
 
-  Serial.println("OK4");
-  vTaskDelay(150 / portTICK_PERIOD_MS);
-  Serial.println("OK5");
-  digitalWrite(15, HIGH); // CPU正常启动后亮灯闪烁
+  // vTaskDelay(500 / portTICK_PERIOD_MS);
+  // digitalWrite(15, LOW); // 外围传感器通电控制
+  // Serial.println("OK4");
 
-  // gpio_ISR_init();
-  // gpio_intr_init();
+  // Serial.println("OK5");
+  // digitalWrite(15, HIGH); // CPU正常启动后亮灯闪烁
   Serial.println("###");
 }
 
@@ -63,12 +60,14 @@ void loop()
     read_data_in_batches("/extflash/hello.txt"); // 读取Flash
     if (TIME_TO_SLEEP == 0)
       _STOPACAN();
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
     if (!digitalRead(25))
       Flash_Erase_FATfile("/extflash/hello.txt");
   }
 
   serialEvent();
+  read_data_config("/extflash/config.txt"); // 读取上一次的设置内容
+
   if (Wifi_init_succ == 1)
     wifiEvent();
 
@@ -78,35 +77,28 @@ void loop()
   {
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
-    Serial.printf("%c", 0xFF);
-    Serial.printf("%c", Succ_disconnect);
     ESP_LOGI(INFO_DEBUG, "WiFI_OFF is successed");
     Wifi_init_succ = 0;
   }
 
   if (SINGLE_flag == 0 || SINGLE_flag == 1)
   {
-    Serial.println("OK6");
+    // Serial.println("OK6");
     Flash_Write_RTC();
     if (AS7341_SCAN_flag)
     {
-      Serial.println("OK7");
+      // Serial.println("OK7");
+      // vTaskDelay(1700 / portTICK_PERIOD_MS);
       digitalWrite(15, LOW);
-      Serial.println("OK8");
-      Serial.println("OK8");
-      Serial.println("OK8");
-      Serial.println("OK8");
-      Serial.println("OK8");
-      Serial.println("OK8");
-      Serial.println("OK8");
+
       if (!_I2C_AS7341INIT_Flag)
       {
-        Serial.println("OK9");
+        // Serial.println("OK9");
         AS7341init();
         _I2C_BMI160INIT_Flag = 0;
         _I2C_AS7341INIT_Flag = 1;
       }
-      Serial.println("OK10");
+      // Serial.println("OK10");
       AS7341Scan();
       digitalWrite(15, HIGH);
     }
@@ -151,7 +143,7 @@ void loop()
     ESP_LOGI(INFO_DEBUG, "Going to sleep now");
 
     serialEvent();
-    // SINGLE_flag = 1;
+
     esp_deep_sleep_start();
   }
 }

@@ -115,6 +115,7 @@ void serialEvent()
           Serial.printf("%c", table_cp[i]);
         }
         getEventFlag();
+        Write_config_Data(table_cp);
         memset(table_cp, 0, 9); // 在使用数组table_cp时清空
         memset(table_data, 0, 9);
       }
