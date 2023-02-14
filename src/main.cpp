@@ -16,6 +16,9 @@ uint8_t _I2C_AS7341INIT_Flag = 0;
 void setup()
 {
   pinMode(25, INPUT_PULLUP);
+  pinMode(5, OUTPUT);
+  digitalWrite(15,LOW);
+  
   if (digitalRead(25))
   {
     esp_log_level_set(ERROR_DEBUG, ESP_LOG_NONE);

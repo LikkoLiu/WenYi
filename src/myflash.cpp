@@ -119,7 +119,7 @@ esp_flash_t *example_init_ext_flash(void)
         .host_id = VSPI_HOST,
         .cs_io_num = VSPI_IOMUX_PIN_NUM_CS,
         .io_mode = SPI_FLASH_DIO,
-        .speed = ESP_FLASH_40MHZ,
+        .speed = ESP_FLASH_5MHZ,
         .cs_id = 0,
     };
 
