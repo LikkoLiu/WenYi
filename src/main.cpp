@@ -103,6 +103,23 @@ void loop()
       digitalWrite(15, HIGH);
     }
 
+    if (UV_SCAN_flag)
+    {
+      digitalWrite(15, LOW);
+
+      //UV_Fake
+      if (!_I2C_AS7341INIT_Flag)
+      {
+        // Serial.println("OK9");
+        AS7341init();
+        _I2C_BMI160INIT_Flag = 0;
+        _I2C_AS7341INIT_Flag = 1;
+      }
+
+      UVDisplay_Fake();
+      digitalWrite(15, HIGH);
+    }
+
     if (BMI160_SCAN_flag)
     {
       digitalWrite(15, LOW);
@@ -121,12 +138,6 @@ void loop()
       digitalWrite(15, HIGH);
     }
 
-    if (UV_SCAN_flag)
-    {
-      digitalWrite(15, LOW);
-      UVDisplay();
-      digitalWrite(15, HIGH);
-    }
     if (SINGLE_flag == 1)
       SINGLE_flag = 2;
     // Flash_Writeln(); // flansh存储换行

@@ -4,6 +4,7 @@
 #include <communication.h>
 #include <mywifi.h>
 #include "myflash.h"
+#include <myas7341.h>
 #define serialAS7341S_log 0
 
 extern int ReadUVintensityPin; // Output from the sensor

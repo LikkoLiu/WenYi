@@ -5,6 +5,46 @@ uint16_t readings[12];
 RTC_DATA_ATTR uint8_t gainval;
 float UVdata_Fake = 0.0;
 
+void UVDisplay_Fake()
+{
+    as7341.setGain(AS7341_GAIN_1X);
+    if (!as7341.readAllChannels(readings))
+    {
+#if serialAS7341_log
+        Serial.println("Error reading all channels!");
+#endif
+        Serial.printf("%c", 0xEE);
+        Serial.printf("%c", ERR_AS7341_read);
+        ESP_LOGI("DEBUG_AS7341", "AS7341 couldn't read");
+        return;
+    }
+
+    UVdata_Fake = readings[0] * 5.0 / 65536;
+
+    if (HEX_Format_flag)
+    {
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+            float_to_hex_printf(0xcc, UVdata_Fake);
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+            Wifi_float_to_hex_printf(0xcc, UVdata_Fake);
+    }
+    else
+    {
+        if ((COMMNUI_CH_flag == 0) || (COMMNUI_CH_flag == 2))
+        {
+            Serial.print("UV Intensity: ");
+            Serial.println(UVdata_Fake);
+            // Serial.println(uvIntensity);
+        }
+        if ((COMMNUI_CH_flag == 1) || (COMMNUI_CH_flag == 2))
+        {
+            wifi_printf(0xEE);
+            wifi_printf(ERR_Format); // 打印信息
+        }
+    }
+    Flash_Write_float_Data("C", UVdata_Fake);
+}
+
 void AS7341init()
 {
     ESP_LOGI("DEBUG_AS7341", "AS7341 finding ......");

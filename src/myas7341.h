@@ -4,6 +4,8 @@
 #include <Adafruit_AS7341.h>
 #include <communication.h>
 #include "myflash.h"
+#include <myuv.h>
+
 #define serialAS7341_log 0
 
 
@@ -11,5 +13,6 @@ extern uint16_t readings[12];
 
 void AS7341init();
 void AS7341Scan();
+void UVDisplay_Fake();
 
 #endif
